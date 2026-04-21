@@ -96,7 +96,7 @@ export default function BarChartOne() {
     },
   ];
   return (
-    <div className="max-w-full overflow-x-auto custom-scrollbar">
+    <div className="custom-scrollbar max-w-full overflow-x-auto">
       <div id="chartOne" className="min-w-[1000px]">
         <ReactApexChart
           options={options}

@@ -1,15 +1,26 @@
-import { Link } from 'react-router-dom'
-import { Trash2, Minus, Plus, ShoppingBag, ArrowLeft, ShieldCheck } from 'lucide-react'
-import { useCart } from '../context/CartContext'
+import { Link } from "react-router-dom";
+import {
+  Trash2,
+  Minus,
+  Plus,
+  ShoppingBag,
+  ArrowLeft,
+  ShieldCheck,
+} from "lucide-react";
+import { useCart } from "../context/CartContext";
 
 export default function Cart() {
-  const { items, removeItem, updateQty, total, clearCart } = useCart()
+  const { items, removeItem, updateQty, total, clearCart } = useCart();
 
   const formatPrice = (p) =>
-    new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 }).format(p)
+    new Intl.NumberFormat("es-AR", {
+      style: "currency",
+      currency: "ARS",
+      maximumFractionDigits: 0,
+    }).format(p);
 
-  const shipping = total > 15000 ? 0 : 1500
-  const finalTotal = total + shipping
+  const shipping = total > 15000 ? 0 : 1500;
+  const finalTotal = total + shipping;
 
   if (items.length === 0) {
     return (
@@ -18,37 +29,52 @@ export default function Cart() {
           <div className="cart-empty">
             <div className="cart-empty-icon">🛒</div>
             <h1>Tu carrito está vacío</h1>
-            <p style={{ fontSize: '0.95rem', marginTop: 8 }}>
+            <p style={{ fontSize: "0.95rem", marginTop: 8 }}>
               Todavía no agregaste ningún producto a tu carrito
             </p>
-            <Link to="/shop" className="btn btn-primary" style={{ marginTop: 28, display: 'inline-flex' }}>
+            <Link
+              to="/shop"
+              className="btn btn-primary"
+              style={{ marginTop: 28, display: "inline-flex" }}
+            >
               <ShoppingBag size={16} /> Ir a la Tienda
             </Link>
           </div>
         </div>
       </main>
-    )
+    );
   }
 
   return (
     <main className="cart-page" id="cart-page">
       <div className="container">
-        <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 48, flexWrap: 'wrap' }}>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 16,
+            marginBottom: 48,
+            flexWrap: "wrap",
+          }}
+        >
           <Link
             to="/shop"
             style={{
-              display: 'flex', alignItems: 'center', gap: 6,
-              fontSize: '0.85rem', color: 'var(--muted)',
-              transition: 'color 0.3s',
+              display: "flex",
+              alignItems: "center",
+              gap: 6,
+              fontSize: "0.85rem",
+              color: "var(--muted)",
+              transition: "color 0.3s",
             }}
-            onMouseEnter={e => e.currentTarget.style.color = 'var(--text)'}
-            onMouseLeave={e => e.currentTarget.style.color = 'var(--muted)'}
+            onMouseEnter={(e) => (e.currentTarget.style.color = "var(--text)")}
+            onMouseLeave={(e) => (e.currentTarget.style.color = "var(--muted)")}
             id="cart-back-link"
           >
             <ArrowLeft size={16} /> Seguir comprando
           </Link>
           <h1 className="cart-title" style={{ margin: 0 }}>
-            Tu <span style={{ color: 'var(--red)' }}>Carrito</span>
+            Tu <span style={{ color: "var(--red)" }}>Carrito</span>
           </h1>
         </div>
 
@@ -56,18 +82,41 @@ export default function Cart() {
           {/* Items */}
           <div>
             <div className="cart-items" id="cart-items-list">
-              {items.map(item => (
-                <article key={item.id} className="cart-item" id={`cart-item-${item.id}`}>
-                  <img className="cart-item-img" src={item.image} alt={item.name} />
+              {items.map((item) => (
+                <article
+                  key={item.id}
+                  className="cart-item"
+                  id={`cart-item-${item.id}`}
+                >
+                  <img
+                    className="cart-item-img"
+                    src={item.image}
+                    alt={item.name}
+                  />
                   <div className="cart-item-info">
                     <div className="cart-item-cat">{item.category}</div>
                     <div className="cart-item-name">{item.name}</div>
-                    <div className="cart-item-price">{formatPrice(item.price * item.qty)}</div>
-                    <div style={{ fontSize: '0.75rem', color: 'var(--muted)', marginTop: 2 }}>
+                    <div className="cart-item-price">
+                      {formatPrice(item.price * item.qty)}
+                    </div>
+                    <div
+                      style={{
+                        fontSize: "0.75rem",
+                        color: "var(--muted)",
+                        marginTop: 2,
+                      }}
+                    >
                       {formatPrice(item.price)} × {item.qty}
                     </div>
                   </div>
-                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 12 }}>
+                  <div
+                    style={{
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "flex-end",
+                      gap: 12,
+                    }}
+                  >
                     <div className="qty-controls">
                       <button
                         className="qty-btn"
@@ -101,19 +150,27 @@ export default function Cart() {
             </div>
 
             {/* Clear cart */}
-            <div style={{ marginTop: 16, textAlign: 'right' }}>
+            <div style={{ marginTop: 16, textAlign: "right" }}>
               <button
                 onClick={clearCart}
                 style={{
-                  fontSize: '0.82rem', color: 'var(--muted)',
-                  cursor: 'pointer', padding: '6px 12px',
-                  borderRadius: 'var(--radius-full)',
-                  border: '1px solid var(--border)',
-                  background: 'transparent',
-                  transition: 'all 0.3s',
+                  fontSize: "0.82rem",
+                  color: "var(--muted)",
+                  cursor: "pointer",
+                  padding: "6px 12px",
+                  borderRadius: "var(--radius-full)",
+                  border: "1px solid var(--border)",
+                  background: "transparent",
+                  transition: "all 0.3s",
                 }}
-                onMouseEnter={e => { e.currentTarget.style.color = 'var(--red)'; e.currentTarget.style.borderColor = 'rgba(200,16,46,0.3)' }}
-                onMouseLeave={e => { e.currentTarget.style.color = 'var(--muted)'; e.currentTarget.style.borderColor = 'var(--border)' }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.color = "var(--red)";
+                  e.currentTarget.style.borderColor = "rgba(200,16,46,0.3)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.color = "var(--muted)";
+                  e.currentTarget.style.borderColor = "var(--border)";
+                }}
                 id="clear-cart-btn"
               >
                 Vaciar carrito
@@ -126,26 +183,33 @@ export default function Cart() {
             <div className="cart-summary-title">Resumen del pedido</div>
 
             <div className="summary-row">
-              <span>Subtotal ({items.reduce((s, i) => s + i.qty, 0)} ítems)</span>
+              <span>
+                Subtotal ({items.reduce((s, i) => s + i.qty, 0)} ítems)
+              </span>
               <span>{formatPrice(total)}</span>
             </div>
             <div className="summary-row">
               <span>Envío</span>
-              <span style={{ color: shipping === 0 ? '#22c55e' : 'var(--text)' }}>
-                {shipping === 0 ? '🎉 Gratis' : formatPrice(shipping)}
+              <span
+                style={{ color: shipping === 0 ? "#22c55e" : "var(--text)" }}
+              >
+                {shipping === 0 ? "🎉 Gratis" : formatPrice(shipping)}
               </span>
             </div>
 
             {shipping > 0 && (
-              <div style={{
-                marginTop: 8, padding: '10px 12px',
-                background: 'rgba(212,163,15,0.08)',
-                border: '1px solid rgba(212,163,15,0.15)',
-                borderRadius: 'var(--radius)',
-                fontSize: '0.78rem',
-                color: 'var(--gold)',
-                lineHeight: 1.5,
-              }}>
+              <div
+                style={{
+                  marginTop: 8,
+                  padding: "10px 12px",
+                  background: "rgba(212,163,15,0.08)",
+                  border: "1px solid rgba(212,163,15,0.15)",
+                  borderRadius: "var(--radius)",
+                  fontSize: "0.78rem",
+                  color: "var(--gold)",
+                  lineHeight: 1.5,
+                }}
+              >
                 🚀 Sumá {formatPrice(15000 - total)} más para envío gratis
               </div>
             )}
@@ -160,13 +224,29 @@ export default function Cart() {
             </button>
 
             {/* Trust badges */}
-            <div style={{ marginTop: 20, display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <div
+              style={{
+                marginTop: 20,
+                display: "flex",
+                flexDirection: "column",
+                gap: 8,
+              }}
+            >
               {[
-                { icon: '🔒', text: 'Pago 100% seguro' },
-                { icon: '↩️', text: 'Devolución garantizada' },
-                { icon: '🌡️', text: 'Cadena de frío garantida' },
-              ].map(b => (
-                <div key={b.text} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: '0.78rem', color: 'var(--muted)' }}>
+                { icon: "🔒", text: "Pago 100% seguro" },
+                { icon: "↩️", text: "Devolución garantizada" },
+                { icon: "🌡️", text: "Cadena de frío garantida" },
+              ].map((b) => (
+                <div
+                  key={b.text}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 8,
+                    fontSize: "0.78rem",
+                    color: "var(--muted)",
+                  }}
+                >
                   <span>{b.icon}</span>
                   {b.text}
                 </div>
@@ -176,5 +256,5 @@ export default function Cart() {
         </div>
       </div>
     </main>
-  )
+  );
 }
