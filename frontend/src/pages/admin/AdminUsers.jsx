@@ -1,9 +1,8 @@
 import { useState, useEffect } from "react";
 import { Users, Shield, User, Search, Pencil, X, Check, Download } from "lucide-react";
 import { supabase } from "../../lib/supabase";
-import * as XLSX from "xlsx";
 import jsPDF from "jspdf";
-import "jspdf-autotable";
+import autoTable from "jspdf-autotable";
 
 export default function AdminUsers() {
   const [users, setUsers] = useState([]);
@@ -49,21 +48,6 @@ export default function AdminUsers() {
     fetchUsers();
   };
 
-  const exportToExcel = () => {
-    const data = filtered.map(u => ({
-      ID: u.id,
-      Nombre: u.full_name || "",
-      Email: u.email,
-      Rol: u.role,
-      Telefono: u.phone || "",
-      Registro: new Date(u.created_at).toLocaleDateString("es-AR")
-    }));
-    const worksheet = XLSX.utils.json_to_sheet(data);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Usuarios");
-    XLSX.writeFile(workbook, "usuarios_la_vaca_roja.xlsx");
-  };
-
   const exportToPDF = () => {
     const doc = new jsPDF();
     doc.text("Reporte de Usuarios - La Vaca Roja", 14, 15);
@@ -76,7 +60,7 @@ export default function AdminUsers() {
       new Date(u.created_at).toLocaleDateString("es-AR")
     ]);
 
-    doc.autoTable({
+    autoTable(doc, {
       head: [["Nombre", "Email", "Rol", "Teléfono", "Registro"]],
       body: tableData,
       startY: 20,
@@ -96,11 +80,8 @@ export default function AdminUsers() {
           </p>
         </div>
         <div style={{ display: 'flex', gap: '10px' }}>
-          <button className="btn btn-ghost btn-sm" onClick={exportToPDF}>
+          <button className="btn btn-primary btn-sm" onClick={exportToPDF}>
             <Download size={16} /> Exportar PDF
-          </button>
-          <button className="btn btn-primary btn-sm" onClick={exportToExcel}>
-            <Download size={16} /> Exportar Excel
           </button>
         </div>
       </div>

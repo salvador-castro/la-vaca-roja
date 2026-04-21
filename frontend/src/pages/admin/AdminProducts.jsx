@@ -6,10 +6,7 @@ import * as XLSX from "xlsx";
 const CATEGORIES = ["Vacuno", "Cerdo", "Pollo", "Hamburguesas", "Embutidos"];
 const BADGES = [{ value: "", label: "Ninguno" }, { value: "premium", label: "Premium" }, { value: "promo", label: "Oferta" }, { value: "new", label: "Nuevo" }];
 
-const empty = {
-  name: "", category: "Vacuno", description: "", price: "",
-  image_url: "", badge: "", unit: "kg", has_variants: false, active: true,
-};
+const empty = { name: "", category: "Vacuno", price: "", stock: 0, image_url: "", badge: "", unit: "kg", active: true };
 
 export default function AdminProducts() {
   const [products, setProducts] = useState([]);
@@ -26,6 +23,8 @@ export default function AdminProducts() {
     priceValue: "",
     category: "",
     active: "",
+    stockAction: "none",
+    stockValue: "",
   });
   const fileInputRef = useRef(null);
   const imageInputRef = useRef(null);
@@ -37,6 +36,7 @@ export default function AdminProducts() {
     const { data } = await supabase
       .from("products")
       .select("*")
+      .neq("category", "Promociones")
       .order("created_at", { ascending: false });
     setProducts(data || []);
     setLoading(false);
@@ -60,10 +60,11 @@ export default function AdminProducts() {
     setSaving(true);
     setError("");
 
-    const payload = {
-      ...form,
+    const payload = { 
+      ...form, 
       price: parseFloat(form.price),
-      badge: form.badge || null,
+      stock: parseInt(form.stock) || 0,
+      badge: form.badge || null 
     };
 
     let err;
@@ -117,6 +118,7 @@ export default function AdminProducts() {
       Nombre: p.name,
       Categoría: p.category,
       Precio: p.price,
+      Stock: p.stock,
       Estado: p.active ? "Activo" : "Inactivo",
       Unidad: p.unit,
       Badge: p.badge || "",
@@ -147,6 +149,7 @@ export default function AdminProducts() {
           name: row.Nombre,
           category: row.Categoría || "Vacuno",
           price: parseFloat(row.Precio),
+          stock: parseInt(row.Stock) || 0,
           active: row.Estado === "Activo",
           unit: row.Unidad || "kg",
           badge: row.Badge || null,
@@ -196,6 +199,13 @@ export default function AdminProducts() {
         else if (bulkForm.priceAction === "decrease_pct") updates.price = product.price * (1 - val/100);
         else if (bulkForm.priceAction === "increase_amt") updates.price = product.price + val;
         else if (bulkForm.priceAction === "decrease_amt") updates.price = Math.max(0, product.price - val);
+      }
+
+      if (bulkForm.stockAction !== "none" && bulkForm.stockValue !== "") {
+        const val = parseInt(bulkForm.stockValue) || 0;
+        if (bulkForm.stockAction === "set") updates.stock = Math.max(0, val);
+        else if (bulkForm.stockAction === "add") updates.stock = product.stock + val;
+        else if (bulkForm.stockAction === "sub") updates.stock = Math.max(0, product.stock - val);
       }
 
       if (Object.keys(updates).length > 0) {
@@ -249,13 +259,14 @@ export default function AdminProducts() {
                 <th>Producto</th>
                 <th>Categoría</th>
                 <th>Precio</th>
+                <th>Stock</th>
                 <th>Estado</th>
                 <th>Acciones</th>
               </tr>
             </thead>
             <tbody>
               {products.length === 0 ? (
-                <tr><td colSpan={6} className="admin-table-empty">No hay productos</td></tr>
+                <tr><td colSpan={7} className="admin-table-empty">No hay productos</td></tr>
               ) : (
                 products.map((p) => (
                   <tr key={p.id}>
@@ -272,7 +283,8 @@ export default function AdminProducts() {
                       </div>
                     </td>
                     <td>{p.category}</td>
-                    <td>{formatPrice(p.price)}</td>
+                    <td>{formatPrice(p.price)} / {p.unit}</td>
+                    <td>{p.stock}</td>
                     <td>
                       <span className={`admin-status-pill ${p.active ? "active" : "inactive"}`}>
                         {p.active ? "Activo" : "Inactivo"}
@@ -330,12 +342,16 @@ export default function AdminProducts() {
 
               <div className="admin-form-row">
                 <div className="auth-field">
-                  <label>Precio (ARS) *</label>
-                  <input type="number" value={form.price} onChange={set("price")} placeholder="9200" min="0" required />
+                  <label>Precio *</label>
+                  <input type="number" value={form.price} onChange={set("price")} placeholder="5000" min="0" step="0.01" required />
+                </div>
+                <div className="auth-field">
+                  <label>Stock</label>
+                  <input type="number" value={form.stock} onChange={set("stock")} placeholder="0" min="0" step="1" />
                 </div>
                 <div className="auth-field">
                   <label>Unidad</label>
-                  <input value={form.unit} onChange={set("unit")} placeholder="kg" />
+                  <input value={form.unit} onChange={set("unit")} placeholder="kg, unidad, pack..." />
                 </div>
               </div>
 
@@ -416,6 +432,21 @@ export default function AdminProducts() {
                   </select>
                   {bulkForm.priceAction !== "none" && (
                     <input type="number" placeholder="Valor" value={bulkForm.priceValue} onChange={(e) => setBulkForm(f => ({...f, priceValue: e.target.value}))} style={{ width: 100 }} />
+                  )}
+                </div>
+              </div>
+
+              <div className="auth-field">
+                <label>Stock</label>
+                <div style={{ display: 'flex', gap: 10 }}>
+                  <select value={bulkForm.stockAction} onChange={(e) => setBulkForm(f => ({...f, stockAction: e.target.value}))}>
+                    <option value="none">No modificar</option>
+                    <option value="set">Fijar valor a</option>
+                    <option value="add">Sumar</option>
+                    <option value="sub">Restar</option>
+                  </select>
+                  {bulkForm.stockAction !== "none" && (
+                    <input type="number" placeholder="Cant" value={bulkForm.stockValue} onChange={(e) => setBulkForm(f => ({...f, stockValue: e.target.value}))} style={{ width: 100 }} />
                   )}
                 </div>
               </div>

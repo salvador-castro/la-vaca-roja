@@ -159,15 +159,15 @@ export default function Home() {
             </h2>
           </div>
 
-          <div className="bank-promos-grid reveal" style={{ marginTop: 40 }}>
+          <div className="bank-promos-grid reveal" style={{ marginTop: 40, textAlign: 'center' }}>
             {banks.map((b) => (
               <div
                 key={b.abbr}
                 className="bank-card"
-                style={{ "--bank-color": b.color }}
+                style={{ "--bank-color": b.color, alignItems: 'center' }}
               >
                 {b.img ? (
-                  <img src={b.img} alt={b.name} style={{ height: '40px', objectFit: 'contain', marginBottom: '12px', justifySelf: 'start' }} />
+                  <img src={b.img} alt={b.name} style={{ height: '70px', objectFit: 'contain', marginBottom: '12px' }} />
                 ) : (
                   <span
                     className="bank-abbr-badge"
