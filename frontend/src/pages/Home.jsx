@@ -1,465 +1,229 @@
-import { useEffect, useRef } from "react";
+import { useEffect } from "react";
 import { Link } from "react-router-dom";
-import {
-  ArrowRight,
-  Flame,
-  Star,
-  Truck,
-  ShieldCheck,
-  Award,
-} from "lucide-react";
+import { ArrowRight, Flame, Star, Truck, ShieldCheck, Award, Clock } from "lucide-react";
 import { products } from "../data/products";
 import ProductCard from "../components/ProductCard";
 
-/* ---------- Particles ---------- */
-function Particles() {
-  const sizes = [4, 6, 5, 3, 7, 4, 5, 3, 6, 4];
-  const colors = [
-    "rgba(200,16,46,0.7)",
-    "rgba(200,16,46,0.5)",
-    "rgba(212,163,15,0.4)",
-    "rgba(200,16,46,0.6)",
-  ];
-  return (
-    <div className="hero-particles" aria-hidden="true">
-      {sizes.map((s, i) => (
-        <div
-          key={i}
-          className="particle"
-          style={{
-            width: s,
-            height: s,
-            background: colors[i % colors.length],
-            left: `${10 + i * 8}%`,
-            bottom: `${15 + (i % 3) * 12}%`,
-            "--drift": `${(i % 2 === 0 ? 1 : -1) * (10 + i * 5)}px`,
-            animationDuration: `${4 + i * 0.7}s`,
-            animationDelay: `${i * 0.6}s`,
-          }}
-        />
-      ))}
-    </div>
-  );
-}
-
-/* ---------- Bank Promos ---------- */
-const banks = [
-  {
-    name: "Banco Galicia",
-    abbr: "GAL",
-    color: "#c8102e",
-    bg: "#1a0808",
-    discount: "40%",
-    deal: "Todos los martes — Visa y Mastercard",
-    days: "Martes",
-  },
-  {
-    name: "BBVA",
-    abbr: "BBVA",
-    color: "#004a9f",
-    bg: "#080f1a",
-    discount: "25%",
-    deal: "Los miércoles con tarjeta BBVA",
-    days: "Miércoles",
-  },
-  {
-    name: "Santander",
-    abbr: "SAN",
-    color: "#ec0000",
-    bg: "#1a0808",
-    discount: "30%",
-    deal: "Viernes con Select — Visa y Debit",
-    days: "Viernes",
-  },
-  {
-    name: "Macro",
-    abbr: "MCR",
-    color: "#f5a623",
-    bg: "#1a1208",
-    discount: "20%",
-    deal: "Jueves con Macro — todas las tarjetas",
-    days: "Jueves",
-  },
-  {
-    name: "Naranja X",
-    abbr: "NRJ",
-    color: "#ff6600",
-    bg: "#1a1008",
-    discount: "35%",
-    deal: "Sábados con Naranja Visa",
-    days: "Sábados",
-  },
-  {
-    name: "Banco Nación",
-    abbr: "BNA",
-    color: "#1e5fa8",
-    bg: "#080f1a",
-    discount: "15%",
-    deal: "Lunes y miércoles — débito BNA",
-    days: "Lun y Mié",
-  },
-];
-
-/* ---------- Featured promos ---------- */
-const promos = [
-  {
-    id: 1,
-    tag: "🔥 Top ventas",
-    title: "Pack Asado Completo",
-    sub: "Tira, vacío, chorizo y morcilla para 4 personas",
-    img: "/images/ribs.png",
-    discount: "20%",
-  },
-  {
-    id: 2,
-    tag: "⚡ Oferta flash",
-    title: "Hamburguesas Artesanales",
-    sub: "Pack x8 medallones premium de 180g c/u",
-    img: "/images/burger.png",
-    discount: "30%",
-  },
-  {
-    id: 3,
-    tag: "👑 Premium",
-    title: "Ojo de Bife Black Angus",
-    sub: "Corte de autor con marmoleado excepcional",
-    img: "/images/ribeye.png",
-    discount: "15%",
-  },
-];
-
-/* ---------- Scroll reveal hook ---------- */
+/* ---- Scroll reveal ---- */
 function useReveal() {
   useEffect(() => {
     const els = document.querySelectorAll(".reveal");
     const obs = new IntersectionObserver(
-      (entries) =>
-        entries.forEach((e) => {
-          if (e.isIntersecting) e.target.classList.add("visible");
-        }),
-      { threshold: 0.12 },
+      (entries) => entries.forEach((e) => { if (e.isIntersecting) e.target.classList.add("visible"); }),
+      { threshold: 0.1 }
     );
     els.forEach((el) => obs.observe(el));
     return () => obs.disconnect();
   }, []);
 }
 
+/* ---- Static data ---- */
+const banks = [
+  { name: "Banco Galicia", abbr: "GAL", color: "#c8102e", discount: "40%", deal: "Visa y Mastercard", days: "Martes" },
+  { name: "BBVA",          abbr: "BBVA",color: "#004a9f", discount: "25%", deal: "Tarjeta BBVA",      days: "Miércoles" },
+  { name: "Santander",     abbr: "SAN", color: "#ec0000", discount: "30%", deal: "Visa y Debit",       days: "Viernes" },
+  { name: "Banco Macro",   abbr: "MCR", color: "#f5a623", discount: "20%", deal: "Todas las tarjetas", days: "Jueves" },
+  { name: "Naranja X",     abbr: "NRJ", color: "#ff6600", discount: "35%", deal: "Naranja Visa",        days: "Sábados" },
+  { name: "Banco Nación",  abbr: "BNA", color: "#1e5fa8", discount: "15%", deal: "Débito BNA",          days: "Lun y Mié" },
+];
+
+const promos = [
+  { id: 1, icon: "🥩", title: "Pack Asado Completo", desc: "Tira, vacío, chorizo y morcilla para 4 personas. El combo definitivo para el domingo." },
+  { id: 2, icon: "🍔", title: "Hamburguesas Artesanales", desc: "Pack x8 medallones premium de 180g. Sin conservantes, sin aditivos." },
+  { id: 3, icon: "🏆", title: "Ojo de Bife Black Angus", desc: "Corte de autor con marmoleado excepcional. El rey de la parrilla argentina." },
+];
+
+const features = [
+  { icon: Truck,       title: "Delivery mismo día",        desc: "Pedís antes de las 14hs y lo tenés en el día. CABA y GBA." },
+  { icon: ShieldCheck, title: "Frescura garantizada",       desc: "Todos los cortes son faenados el mismo día. Nada de freezado." },
+  { icon: Award,       title: "20 años de trayectoria",    desc: "Desde 2004 en el barrio de Palermo, sirviendo a miles de familias." },
+  { icon: Star,        title: "Calidad premium",            desc: "Sólo trabajamos con proveedores certificados. Razas selectas." },
+];
+
 export default function Home() {
   useReveal();
-  const featuredProducts = products.slice(0, 4);
+  const featured = products.slice(0, 4);
 
   return (
     <main id="home-page">
-      {/* ====== HERO ====== */}
-      <section className="hero noise" id="hero" aria-label="Hero">
+
+      {/* ======= HERO ======= */}
+      <section className="hero" id="hero" aria-label="Hero">
         <div className="hero-bg">
           <div className="hero-bg-img" />
-          <div className="hero-gradient" />
-          <div className="hero-orb hero-orb-1" aria-hidden="true" />
-          <div className="hero-orb hero-orb-2" aria-hidden="true" />
-          <div className="hero-orb hero-orb-3" aria-hidden="true" />
-          <Particles />
+          <div className="hero-bg-overlay" />
         </div>
+        <div className="hero-stripe" aria-hidden="true" />
 
         <div className="hero-content">
           <div className="hero-eyebrow">
-            <span className="hero-eyebrow-dot" />
             Buenos Aires · Argentina · Desde 2004
           </div>
 
           <h1 className="hero-title">
-            <span className="hero-title-line">La Mejor</span>
-            <span className="hero-title-line">
-              <span className="accent">Carne</span>
-            </span>
-            <span className="hero-title-line">de Argentina</span>
+            La Mejor
+            <span className="accent">Carne</span>
+            de Argentina
           </h1>
 
           <p className="hero-subtitle">
-            Cortes premium seleccionados a mano, con más de 20 años de
-            tradición. Delivery a todo Buenos Aires. Calidad garantizada o te
-            devolvemos el dinero.
+            Cortes premium seleccionados a mano, con más de 20 años de tradición.
+            Delivery a todo Buenos Aires. Calidad garantizada.
           </p>
 
           <div className="hero-actions">
-            <Link
-              to="/shop"
-              className="btn btn-primary btn-lg"
-              id="hero-shop-btn"
-            >
+            <Link to="/shop" className="btn btn-primary btn-lg" id="hero-shop-btn">
               Ver Tienda <ArrowRight size={18} />
             </Link>
-            <a
-              href="#promos"
+            <button
               className="btn btn-ghost btn-lg"
-              id="hero-promos-btn"
+              onClick={() => document.getElementById("promos")?.scrollIntoView({ behavior: "smooth" })}
             >
-              🔥 Ver Promociones
-            </a>
+              <Flame size={17} /> Ver Promociones
+            </button>
           </div>
 
           <div className="hero-stats">
-            <div>
-              <div className="hero-stat-value">
-                20<span>+</span>
+            {[
+              { val: "20", suf: "+", label: "Años de trayectoria" },
+              { val: "15", suf: "k", label: "Clientes satisfechos" },
+              { val: "60", suf: "+", label: "Cortes disponibles" },
+              { val: "4.9", suf: "★", label: "Calificación promedio" },
+            ].map(({ val, suf, label }) => (
+              <div key={label}>
+                <div className="hero-stat-value">{val}<span>{suf}</span></div>
+                <div className="hero-stat-label">{label}</div>
               </div>
-              <div className="hero-stat-label">Años de trayectoria</div>
-            </div>
-            <div>
-              <div className="hero-stat-value">
-                15<span>k</span>
-              </div>
-              <div className="hero-stat-label">Clientes satisfechos</div>
-            </div>
-            <div>
-              <div className="hero-stat-value">
-                60<span>+</span>
-              </div>
-              <div className="hero-stat-label">Cortes disponibles</div>
-            </div>
-            <div>
-              <div className="hero-stat-value">
-                4.9<span>★</span>
-              </div>
-              <div className="hero-stat-label">Calificación promedio</div>
-            </div>
+            ))}
           </div>
         </div>
       </section>
 
-      {/* ====== FEATURED PROMOS ====== */}
-      <section
-        className="section"
-        id="promos"
-        aria-label="Promociones destacadas"
-      >
+      {/* ======= PROMOS DESTACADAS ======= */}
+      <section className="promos-section section" id="promos" aria-label="Promociones destacadas">
         <div className="container">
           <div className="reveal">
-            <div className="section-label">
-              <Flame size={14} /> Promociones Destacadas
-            </div>
+            <span className="section-eyebrow">Ofertas de la semana</span>
             <h2 className="section-title">
-              Ofertas que no <span>podés perder</span>
+              Promos que no<br /><span>podés perder</span>
             </h2>
-            <p className="section-sub">
-              Promos actualizadas cada semana. Aprovechá los mejores descuentos
-              en cortes seleccionados.
-            </p>
           </div>
 
-          <div className="promos-grid reveal" style={{ marginTop: 48 }}>
+          <div className="featured-promos-grid" style={{ marginTop: 40 }}>
             {promos.map((p, i) => (
               <article
                 key={p.id}
-                className={`promo-card reveal reveal-delay-${i + 1}`}
-                id={`promo-card-${p.id}`}
+                className={`featured-promo-card reveal`}
+                style={{ transitionDelay: `${i * 0.1}s` }}
               >
-                <img
-                  className="promo-card-img"
-                  src={p.img}
-                  alt={p.title}
-                  loading="lazy"
-                />
-                <div className="promo-card-overlay">
-                  <span className="promo-card-tag">{p.tag}</span>
-                  <h3 className="promo-card-title">{p.title}</h3>
-                  <p className="promo-card-sub">{p.sub}</p>
-                </div>
-                <div
-                  className="promo-discount"
-                  aria-label={`${p.discount} de descuento`}
-                >
-                  <span className="promo-discount-pct">{p.discount}</span>
-                  <span className="promo-discount-off">OFF</span>
-                </div>
+                <div className="featured-promo-icon">{p.icon}</div>
+                <h3 className="featured-promo-title">{p.title}</h3>
+                <p className="featured-promo-desc">{p.desc}</p>
+                <Link to="/shop" className="btn btn-ghost btn-sm" style={{ alignSelf: "flex-start", marginTop: "auto" }}>
+                  Ver en tienda <ArrowRight size={14} />
+                </Link>
               </article>
             ))}
           </div>
-
-          <div
-            className="reveal"
-            style={{ marginTop: 40, textAlign: "center" }}
-          >
-            <Link to="/shop" className="btn btn-ghost">
-              Ver todas las ofertas <ArrowRight size={16} />
-            </Link>
-          </div>
         </div>
       </section>
 
-      {/* ====== BANK PROMOS ====== */}
-      <section
-        className="section bank-section"
-        id="bank-promos"
-        aria-label="Promociones con bancos"
-      >
+      {/* ======= BANK PROMOS ======= */}
+      <section className="section" style={{ background: "var(--bg)", paddingTop: 40 }} aria-label="Descuentos bancarios">
         <div className="container">
           <div className="reveal">
-            <div className="section-label">
-              <Star size={14} /> Beneficios Bancarios
-            </div>
+            <span className="section-eyebrow">Descuentos bancarios</span>
             <h2 className="section-title">
-              Promociones con <span>tu banco</span>
+              Pagá menos con<br /><span>tu banco</span>
             </h2>
-            <p className="section-sub">
-              Descuentos exclusivos para clientes de los principales bancos del
-              país. Combiná tu tarjeta y ahorrá en cada compra.
-            </p>
           </div>
 
-          <div className="banks-grid">
-            {banks.map((b, i) => (
+          <div className="bank-promos-grid reveal" style={{ marginTop: 40 }}>
+            {banks.map((b) => (
               <div
-                key={b.name}
-                className={`bank-card reveal reveal-delay-${(i % 3) + 1}`}
-                id={`bank-card-${i}`}
+                key={b.abbr}
+                className="bank-card"
+                style={{ "--bank-color": b.color }}
               >
-                <div
-                  className="bank-logo"
-                  style={{
-                    background: b.bg,
-                    color: b.color,
-                    border: `1px solid ${b.color}33`,
-                  }}
+                <span
+                  className="bank-abbr-badge"
+                  style={{ color: b.color, borderColor: b.color + "55", background: b.color + "18" }}
                 >
                   {b.abbr}
+                </span>
+                <div className="bank-discount">
+                  {b.discount}<span> OFF</span>
                 </div>
-                <div className="bank-info">
-                  <div className="bank-name">{b.name}</div>
-                  <div className="bank-deal">{b.deal}</div>
-                </div>
-                <div className="bank-discount">{b.discount}</div>
+                <div className="bank-name">{b.name}</div>
+                <div className="bank-deal">{b.deal}</div>
+                <div className="bank-day">{b.days}</div>
               </div>
             ))}
-          </div>
-
-          <div
-            className="reveal"
-            style={{
-              marginTop: 32,
-              padding: "20px 24px",
-              background: "rgba(212,163,15,0.06)",
-              border: "1px solid rgba(212,163,15,0.18)",
-              borderRadius: "var(--radius-lg)",
-              display: "flex",
-              alignItems: "center",
-              gap: 12,
-            }}
-          >
-            <span style={{ fontSize: "1.5rem" }}>💳</span>
-            <p
-              style={{
-                fontSize: "0.85rem",
-                color: "var(--muted)",
-                lineHeight: 1.6,
-              }}
-            >
-              <strong style={{ color: "var(--text)" }}>
-                ¿Cómo aplicar el descuento?
-              </strong>{" "}
-              Ingresá con tu cuenta, hacé tu pedido y seleccioná tu banco al
-              finalizar la compra. El descuento se aplica automáticamente.
-              Válido para compras online y en local. Máximo 2 usos por tarjeta
-              por mes.
-            </p>
           </div>
         </div>
       </section>
 
-      {/* ====== FEATURED PRODUCTS ====== */}
-      <section
-        className="section"
-        id="featured-products"
-        aria-label="Productos destacados"
-      >
+      {/* ======= PRODUCTOS DESTACADOS ======= */}
+      <section className="section" style={{ background: "var(--bg-2)" }} aria-label="Productos destacados">
         <div className="container">
-          <div
-            style={{
-              display: "flex",
-              alignItems: "flex-end",
-              justifyContent: "space-between",
-              flexWrap: "wrap",
-              gap: 16,
-              marginBottom: 40,
-            }}
-          >
-            <div className="reveal">
-              <div className="section-label">🥩 Lo más vendido</div>
+          <div className="reveal" style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", flexWrap: "wrap", gap: 12, marginBottom: 40 }}>
+            <div>
+              <span className="section-eyebrow">Selección de la casa</span>
               <h2 className="section-title">
-                Cortes <span>Estrella</span>
+                Cortes<br /><span>Destacados</span>
               </h2>
             </div>
-            <Link to="/shop" className="btn btn-ghost btn-sm reveal">
-              Ver todos <ArrowRight size={14} />
+            <Link to="/shop" className="btn btn-ghost">
+              Ver todo el catálogo <ArrowRight size={16} />
             </Link>
           </div>
 
-          <div className="product-grid">
-            {featuredProducts.map((p, i) => (
-              <div key={p.id} className={`reveal reveal-delay-${i + 1}`}>
-                <ProductCard product={p} />
-              </div>
+          <div className="product-grid reveal">
+            {featured.map((p) => (
+              <ProductCard key={p.id} product={p} />
             ))}
           </div>
         </div>
       </section>
 
-      {/* ====== FEATURES / WHY US ====== */}
-      <section
-        className="section"
-        id="nosotros"
-        style={{ paddingBottom: 120 }}
-        aria-label="Por qué elegirnos"
-      >
+      {/* ======= POR QUÉ ELEGIRNOS ======= */}
+      <section className="nosotros-section section" id="nosotros" aria-label="Por qué elegirnos">
         <div className="container">
-          <div
-            className="reveal"
-            style={{ textAlign: "center", marginBottom: 0 }}
-          >
-            <div className="section-label" style={{ justifyContent: "center" }}>
-              <Award size={14} /> ¿Por qué elegirnos?
-            </div>
-            <h2 className="section-title" style={{ textAlign: "center" }}>
-              Calidad que se <span>siente</span>
+          <div className="reveal">
+            <span className="section-eyebrow">Por qué elegirnos</span>
+            <h2 className="section-title">
+              La tradición que<br /><span>nos distingue</span>
             </h2>
+            <p style={{ color: "var(--muted)", fontSize: "1rem", maxWidth: 560, marginTop: 14, fontStyle: "italic" }}>
+              Más de dos décadas de compromiso con la calidad, la frescura y la atención personalizada.
+              Cada corte que llega a tu mesa pasó por nuestras manos.
+            </p>
           </div>
 
-          <div className="features-grid">
-            {[
-              {
-                icon: "🥩",
-                title: "Cortes de Primera",
-                desc: "Seleccionamos cada pieza a mano. Solo trabajamos con los mejores frigoríficos del país.",
-              },
-              {
-                icon: "🚚",
-                title: "Delivery Express",
-                desc: "Entregas en el mismo día dentro de CABA. Llegamos fresh a tu puerta.",
-              },
-              {
-                icon: "🏆",
-                title: "20 Años de Experiencia",
-                desc: "Dos décadas atendiendo a las familias porteñas con dedicación y pasión.",
-              },
-              {
-                icon: "💳",
-                title: "Múltiples Medios de Pago",
-                desc: "Efectivo, tarjetas, transferencia. Con descuentos exclusivos según tu banco.",
-              },
-            ].map((f, i) => (
-              <div
-                key={f.title}
-                className={`feature-card reveal reveal-delay-${i + 1}`}
-                id={`feature-${i}`}
-              >
-                <div className="feature-icon">{f.icon}</div>
-                <h3 className="feature-title">{f.title}</h3>
-                <p className="feature-desc">{f.desc}</p>
+          <div className="features-grid reveal" style={{ marginTop: 48 }}>
+            {features.map(({ icon: Icon, title, desc }) => (
+              <div key={title} className="feature-card">
+                <div className="feature-icon">
+                  <Icon size={22} />
+                </div>
+                <div className="feature-title">{title}</div>
+                <div className="feature-desc">{desc}</div>
               </div>
             ))}
           </div>
+
+          <div className="reveal" style={{ marginTop: 56, display: "flex", alignItems: "center", gap: 20, flexWrap: "wrap" }}>
+            <Link to="/shop" className="btn btn-primary btn-lg">
+              Explorar tienda <ArrowRight size={18} />
+            </Link>
+            <div style={{ display: "flex", alignItems: "center", gap: 10, color: "var(--muted)", fontSize: "0.88rem", fontStyle: "italic" }}>
+              <Clock size={16} style={{ color: "var(--red)" }} />
+              Lun–Sáb 8:00–21:00 · Dom 10:00–20:00
+            </div>
+          </div>
         </div>
       </section>
+
     </main>
   );
 }

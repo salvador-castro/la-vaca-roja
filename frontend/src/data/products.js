@@ -8,16 +8,23 @@ export const products = [
     image: "/images/ribeye.png",
     badge: "premium",
     unit: "kg",
+    has_variants: false,
   },
   {
     id: 2,
     name: "Bife de Chorizo",
     category: "Vacuno",
-    desc: "El corte favorito de los argentinos. Grueso, jugoso y con tapa de grasa.",
+    desc: "El corte favorito de los argentinos. Jugoso, con tapa de grasa y sabor único.",
     price: 10800,
     image: "/images/bife.png",
     badge: null,
     unit: "kg",
+    has_variants: true,
+    variants: [
+      { name: "Fino", price_modifier: -500 },
+      { name: "Medio", price_modifier: 0 },
+      { name: "Grueso", price_modifier: 500 },
+    ],
   },
   {
     id: 3,
@@ -28,6 +35,12 @@ export const products = [
     image: "/images/ribeye.png",
     badge: null,
     unit: "kg",
+    has_variants: true,
+    variants: [
+      { name: "Fino", price_modifier: -400 },
+      { name: "Medio", price_modifier: 0 },
+      { name: "Grueso", price_modifier: 400 },
+    ],
   },
   {
     id: 4,
@@ -38,6 +51,12 @@ export const products = [
     image: "/images/ribs.png",
     badge: "promo",
     unit: "kg",
+    has_variants: true,
+    variants: [
+      { name: "Fino", price_modifier: -300 },
+      { name: "Medio", price_modifier: 0 },
+      { name: "Grueso", price_modifier: 300 },
+    ],
   },
   {
     id: 5,
@@ -48,6 +67,7 @@ export const products = [
     image: "/images/chicken.png",
     badge: null,
     unit: "unidad",
+    has_variants: false,
   },
   {
     id: 6,
@@ -58,6 +78,7 @@ export const products = [
     image: "/images/burger.png",
     badge: "new",
     unit: "pack x4",
+    has_variants: false,
   },
   {
     id: 7,
@@ -68,6 +89,7 @@ export const products = [
     image: "/images/chorizo.png",
     badge: null,
     unit: "kg",
+    has_variants: false,
   },
   {
     id: 8,
@@ -78,6 +100,12 @@ export const products = [
     image: "/images/ribs.png",
     badge: null,
     unit: "kg",
+    has_variants: true,
+    variants: [
+      { name: "Fino", price_modifier: -500 },
+      { name: "Medio", price_modifier: 0 },
+      { name: "Grueso", price_modifier: 600 },
+    ],
   },
   {
     id: 9,
@@ -88,6 +116,12 @@ export const products = [
     image: "/images/chicken.png",
     badge: null,
     unit: "kg",
+    has_variants: true,
+    variants: [
+      { name: "Fina", price_modifier: -200 },
+      { name: "Media", price_modifier: 0 },
+      { name: "Gruesa", price_modifier: 200 },
+    ],
   },
   {
     id: 10,
@@ -98,6 +132,7 @@ export const products = [
     image: "/images/bife.png",
     badge: "promo",
     unit: "kg",
+    has_variants: false,
   },
   {
     id: 11,
@@ -108,6 +143,7 @@ export const products = [
     image: "/images/chorizo.png",
     badge: null,
     unit: "kg",
+    has_variants: false,
   },
   {
     id: 12,
@@ -118,6 +154,7 @@ export const products = [
     image: "/images/burger.png",
     badge: "new",
     unit: "pack x2",
+    has_variants: false,
   },
 ];
 

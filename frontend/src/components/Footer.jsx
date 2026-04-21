@@ -84,7 +84,7 @@ export default function Footer() {
                   size={14}
                   style={{ color: "var(--red)", flexShrink: 0 }}
                 />
-                <span>Av. Corrientes 1234, Buenos Aires</span>
+                <span>Gascón 801, CABA</span>
               </div>
               <div
                 style={{
@@ -99,7 +99,7 @@ export default function Footer() {
                   size={14}
                   style={{ color: "var(--red)", flexShrink: 0 }}
                 />
-                <span>+54 11 4567-8900</span>
+                <span>+54 11 6687-4595</span>
               </div>
               <div
                 style={{
@@ -114,7 +114,7 @@ export default function Footer() {
                   size={14}
                   style={{ color: "var(--red)", flexShrink: 0 }}
                 />
-                <span>Lun–Sáb: 8:00 – 20:00 | Dom: 9:00 – 14:00</span>
+                <span>Lun–Sáb: 8:00 – 21:00 | Dom-Fer: 10:00 – 20:00</span>
               </div>
             </div>
           </div>
@@ -186,7 +186,7 @@ export default function Footer() {
         <div className="footer-bottom">
           <p className="footer-copy">
             © {new Date().getFullYear()} La Vaca Roja. Todos los derechos
-            reservados. | lavacaroja.com.ar
+            reservados. Diseñado por <a class="mail" target="_blank" href="https://salvadorcastro.vercel.app/">salvaCastro</a>
           </p>
           <div className="footer-socials">
             <a
