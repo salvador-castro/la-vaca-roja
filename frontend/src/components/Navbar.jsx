@@ -42,6 +42,8 @@ export default function Navbar() {
     navigate("/");
   };
 
+  if (isDashboardAdmin) return null;
+
   return (
     <>
       <nav className={`navbar ${scrolled ? "scrolled" : ""}`} id="main-navbar">

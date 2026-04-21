@@ -2,13 +2,14 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard, Package, Tag, Users, Ticket,
-  BarChart2, LogOut, Menu, X, ChevronRight,
+  BarChart2, LogOut, Menu, X, ChevronRight, ShoppingCart
 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import AdminProducts from "./AdminProducts";
 import AdminPromotions from "./AdminPromotions";
 import AdminUsers from "./AdminUsers";
 import AdminCoupons from "./AdminCoupons";
+import AdminOrders from "./AdminOrders";
 import AdminReports from "./AdminReports";
 
 const navItems = [
@@ -17,7 +18,7 @@ const navItems = [
   { id: "promotions", label: "Promociones", icon: Tag },
   { id: "users", label: "Usuarios", icon: Users },
   { id: "coupons", label: "Cupones", icon: Ticket },
-  { id: "stats", label: "Reportes", icon: BarChart2 },
+  { id: "orders", label: "Pedidos", icon: ShoppingCart },
 ];
 
 const views = {
@@ -26,7 +27,7 @@ const views = {
   promotions: AdminPromotions,
   users: AdminUsers,
   coupons: AdminCoupons,
-  stats: AdminReports,
+  orders: AdminOrders,
 };
 
 export default function AdminLayout() {

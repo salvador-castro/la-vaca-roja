@@ -39,6 +39,7 @@ create table if not exists public.products (
   category text not null,
   description text,
   price numeric(10,2) not null,
+  stock integer not null default 0,
   image_url text,
   badge text check (badge in ('premium', 'promo', 'new') or badge is null),
   unit text default 'kg',

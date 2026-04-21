@@ -1,11 +1,8 @@
-import { useState, useEffect } from "react";
-import { Plus, Pencil, Trash2, X, Check, AlertCircle } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { Plus, Pencil, Trash2, X, Check, AlertCircle, Image as ImageIcon } from "lucide-react";
 import { supabase } from "../../lib/supabase";
 
-const empty = {
-  title: "", bank_name: "", bank_abbr: "", bank_color: "#c8102e",
-  discount_percentage: "", deal_text: "", day_name: "", active: true,
-};
+const empty = { name: "", category: "Promociones", price: "", stock: 0, image_url: "", badge: "promo", unit: "pack", active: true };
 
 export default function AdminPromotions() {
   const [promos, setPromos] = useState([]);
@@ -15,14 +12,16 @@ export default function AdminPromotions() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [deleteId, setDeleteId] = useState(null);
+  const imageInputRef = useRef(null);
 
   useEffect(() => { fetchPromos(); }, []);
 
   const fetchPromos = async () => {
     setLoading(true);
     const { data } = await supabase
-      .from("promotions")
+      .from("products")
       .select("*")
+      .eq("category", "Promociones")
       .order("created_at", { ascending: false });
     setPromos(data || []);
     setLoading(false);
@@ -34,20 +33,27 @@ export default function AdminPromotions() {
   };
 
   const openCreate = () => { setForm(empty); setError(""); setModal({ mode: "create" }); };
-  const openEdit = (p) => { setForm({ ...p, discount_percentage: String(p.discount_percentage) }); setError(""); setModal({ mode: "edit", id: p.id }); };
+  const openEdit = (p) => { setForm(p); setError(""); setModal({ mode: "edit", id: p.id }); };
 
   const handleSave = async (e) => {
     e.preventDefault();
-    if (!form.title || !form.discount_percentage) return setError("Título y descuento son obligatorios.");
+    if (!form.name || !form.price) return setError("Nombre y precio son obligatorios.");
     setSaving(true);
     setError("");
 
-    const payload = { ...form, discount_percentage: parseInt(form.discount_percentage) };
+    const payload = { 
+      ...form, 
+      price: parseFloat(form.price),
+      stock: parseInt(form.stock) || 0,
+      badge: form.badge || null,
+      category: "Promociones"
+    };
+
     let err;
     if (modal.mode === "create") {
-      ({ error: err } = await supabase.from("promotions").insert(payload));
+      ({ error: err } = await supabase.from("products").insert(payload));
     } else {
-      ({ error: err } = await supabase.from("promotions").update(payload).eq("id", modal.id));
+      ({ error: err } = await supabase.from("products").update(payload).eq("id", modal.id));
     }
 
     setSaving(false);
@@ -57,16 +63,45 @@ export default function AdminPromotions() {
   };
 
   const handleDelete = async (id) => {
-    await supabase.from("promotions").delete().eq("id", id);
+    await supabase.from("products").delete().eq("id", id);
     setDeleteId(null);
     fetchPromos();
   };
+
+  const handleImageUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    setSaving(true);
+    setError("");
+
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${Math.random()}.${fileExt}`;
+    const filePath = `${fileName}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from('productos')
+      .upload(filePath, file);
+
+    if (uploadError) {
+      setError("Error subiendo la imagen: " + uploadError.message);
+      setSaving(false);
+      return;
+    }
+
+    const { data } = supabase.storage.from('productos').getPublicUrl(filePath);
+    setForm(f => ({ ...f, image_url: data.publicUrl }));
+    setSaving(false);
+  };
+
+  const formatPrice = (p) =>
+    new Intl.NumberFormat("es-AR", { style: "currency", currency: "ARS", maximumFractionDigits: 0 }).format(p);
 
   return (
     <div className="admin-section">
       <div className="admin-section-header">
         <div>
-          <h2>Promociones bancarias</h2>
+          <h2>Promociones y Combos</h2>
           <p>{promos.length} promociones registradas</p>
         </div>
         <button className="btn btn-primary btn-sm" onClick={openCreate}>
@@ -81,9 +116,9 @@ export default function AdminPromotions() {
           <table className="admin-table">
             <thead>
               <tr>
-                <th>Banco</th>
-                <th>Descuento</th>
-                <th>Día</th>
+                <th>Promoción</th>
+                <th>Precio</th>
+                <th>Stock</th>
                 <th>Estado</th>
                 <th>Acciones</th>
               </tr>
@@ -95,18 +130,20 @@ export default function AdminPromotions() {
                 promos.map((p) => (
                   <tr key={p.id}>
                     <td>
-                      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                        <span
-                          className="bank-abbr-badge"
-                          style={{ background: p.bank_color + "22", color: p.bank_color, borderColor: p.bank_color + "44" }}
-                        >
-                          {p.bank_abbr}
-                        </span>
-                        {p.bank_name}
+                      <div className="admin-product-cell">
+                        {p.image_url && (
+                          <img src={p.image_url} alt={p.name} className="admin-product-img" />
+                        )}
+                        <div>
+                          <div style={{ fontWeight: 600 }}>{p.name}</div>
+                          {p.badge && (
+                            <span className="admin-table-muted" style={{ fontSize: 12 }}>Badge: {p.badge}</span>
+                          )}
+                        </div>
                       </div>
                     </td>
-                    <td><strong style={{ color: "var(--red)" }}>{p.discount_percentage}% OFF</strong></td>
-                    <td>{p.day_name || "—"}</td>
+                    <td>{formatPrice(p.price)} / {p.unit}</td>
+                    <td>{p.stock}</td>
                     <td>
                       <span className={`admin-status-pill ${p.active ? "active" : "inactive"}`}>
                         {p.active ? "Activa" : "Inactiva"}
@@ -132,45 +169,55 @@ export default function AdminPromotions() {
               <button className="admin-modal-close" onClick={() => setModal(null)}><X size={20} /></button>
             </div>
             {error && <div className="auth-error"><AlertCircle size={15} /><span>{error}</span></div>}
+            
             <form onSubmit={handleSave} className="admin-form">
               <div className="auth-field">
-                <label>Título *</label>
-                <input value={form.title} onChange={set("title")} placeholder="40% OFF todos los martes" required />
+                <label>Nombre de la Promoción *</label>
+                <input value={form.name} onChange={set("name")} placeholder="Ej: 2x1 en Chorizos" required />
               </div>
+
               <div className="admin-form-row">
                 <div className="auth-field">
-                  <label>Banco</label>
-                  <input value={form.bank_name} onChange={set("bank_name")} placeholder="Banco Galicia" />
+                  <label>Precio Final *</label>
+                  <input type="number" value={form.price} onChange={set("price")} placeholder="5000" min="0" step="0.01" required />
                 </div>
                 <div className="auth-field">
-                  <label>Abreviatura</label>
-                  <input value={form.bank_abbr} onChange={set("bank_abbr")} placeholder="GAL" maxLength={6} />
+                  <label>Stock (Combos disp.)</label>
+                  <input type="number" value={form.stock} onChange={set("stock")} placeholder="0" min="0" step="1" />
+                </div>
+                <div className="auth-field">
+                  <label>Unidad</label>
+                  <input value={form.unit} onChange={set("unit")} placeholder="pack, promo..." />
                 </div>
               </div>
+
               <div className="admin-form-row">
                 <div className="auth-field">
-                  <label>Descuento % *</label>
-                  <input type="number" value={form.discount_percentage} onChange={set("discount_percentage")} placeholder="40" min="1" max="100" required />
+                  <label>Etiqueta (Badge)</label>
+                  <select value={form.badge} onChange={set("badge")}>
+                    <option value="">Ninguna</option>
+                    <option value="promo">Oferta</option>
+                    <option value="premium">Premium</option>
+                    <option value="new">Nuevo</option>
+                  </select>
                 </div>
                 <div className="auth-field">
-                  <label>Día</label>
-                  <input value={form.day_name} onChange={set("day_name")} placeholder="Martes" />
+                  <label>Imagen</label>
+                  <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+                    <input type="file" ref={imageInputRef} onChange={handleImageUpload} style={{ display: 'none' }} accept="image/*" />
+                    <button type="button" className="btn btn-ghost btn-sm" onClick={() => imageInputRef.current.click()} disabled={saving}>
+                      <ImageIcon size={16} /> Subir Imagen
+                    </button>
+                    {form.image_url && <img src={form.image_url} alt="Preview" style={{ height: 30, borderRadius: 4 }} />}
+                  </div>
                 </div>
               </div>
-              <div className="admin-form-row">
-                <div className="auth-field">
-                  <label>Detalle del trato</label>
-                  <input value={form.deal_text} onChange={set("deal_text")} placeholder="Visa y Mastercard" />
-                </div>
-                <div className="auth-field">
-                  <label>Color del banco</label>
-                  <input type="color" value={form.bank_color} onChange={set("bank_color")} style={{ height: 42, padding: 4 }} />
-                </div>
-              </div>
+
               <label className="admin-check-label">
                 <input type="checkbox" checked={form.active} onChange={set("active")} />
-                Promoción activa
+                Promoción activa (Visible en tienda)
               </label>
+
               <div className="admin-modal-footer">
                 <button type="button" className="btn btn-ghost" onClick={() => setModal(null)}>Cancelar</button>
                 <button type="submit" className="btn btn-primary" disabled={saving}>
