@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { Link } from "react-router-dom";
 import { ArrowRight, Flame, Star, Truck, ShieldCheck, Award, Clock } from "lucide-react";
-import { products } from "../data/products";
+import { useProducts } from "../hooks/useProducts";
 import ProductCard from "../components/ProductCard";
 
 /* ---- Scroll reveal ---- */
@@ -63,6 +63,7 @@ const features = [
 
 export default function Home() {
   useReveal();
+  const { products, loading } = useProducts();
   const featured = products.slice(0, 4);
 
   return (
@@ -204,7 +205,9 @@ export default function Home() {
           </div>
 
           <div className="product-grid reveal">
-            {featured.map((p) => (
+            {loading ? (
+              <p style={{ color: "var(--muted)", fontStyle: "italic", gridColumn: "1/-1" }}>Cargando productos...</p>
+            ) : featured.map((p) => (
               <ProductCard key={p.id} product={p} />
             ))}
           </div>
