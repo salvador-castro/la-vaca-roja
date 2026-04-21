@@ -11,6 +11,7 @@ export default function Navbar() {
   const { user, profile, signOut, isAdmin } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
+  const isDashboardAdmin = location.pathname === "/dashboard" && isAdmin;
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 30);
@@ -90,18 +91,20 @@ export default function Navbar() {
               </Link>
             )}
 
-            <button
-              className="nav-cart-btn"
-              id="nav-cart-button"
-              onClick={() => setDrawerOpen(true)}
-              aria-label="Abrir carrito"
-            >
-              <ShoppingCart size={16} strokeWidth={2.5} />
-              <span>Carrito</span>
-              {count > 0 && (
-                <span className="nav-cart-badge" key={count}>{count}</span>
-              )}
-            </button>
+            {!isDashboardAdmin && (
+              <button
+                className="nav-cart-btn"
+                id="nav-cart-button"
+                onClick={() => setDrawerOpen(true)}
+                aria-label="Abrir carrito"
+              >
+                <ShoppingCart size={16} strokeWidth={2.5} />
+                <span>Carrito</span>
+                {count > 0 && (
+                  <span className="nav-cart-badge" key={count}>{count}</span>
+                )}
+              </button>
+            )}
           </div>
 
           <button
@@ -139,13 +142,15 @@ export default function Navbar() {
             <User size={16} /> Ingresar / Registrarse
           </Link>
         )}
-        <button
-          className="btn btn-primary"
-          style={{ marginTop: 8 }}
-          onClick={() => { setDrawerOpen(true); setMobileOpen(false); }}
-        >
-          <ShoppingCart size={16} /> Ver carrito {count > 0 && `(${count})`}
-        </button>
+        {!isDashboardAdmin && (
+          <button
+            className="btn btn-primary"
+            style={{ marginTop: 8 }}
+            onClick={() => { setDrawerOpen(true); setMobileOpen(false); }}
+          >
+            <ShoppingCart size={16} /> Ver carrito {count > 0 && `(${count})`}
+          </button>
+        )}
       </div>
     </>
   );
