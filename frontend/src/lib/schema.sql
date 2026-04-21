@@ -222,6 +222,44 @@ create trigger on_auth_user_created
   for each row execute procedure public.handle_new_user();
 
 -- ================================================
+-- STORAGE: Bucket productos (imágenes de productos)
+-- ================================================
+
+-- Crear el bucket si no existe (público = URLs accesibles sin auth)
+insert into storage.buckets (id, name, public)
+values ('productos', 'productos', true)
+on conflict do nothing;
+
+-- Lectura pública (para mostrar las imágenes en el frontend)
+create policy "Public can view productos"
+  on storage.objects for select
+  using (bucket_id = 'productos');
+
+-- Sólo admin puede subir archivos
+create policy "Admin can upload to productos"
+  on storage.objects for insert
+  with check (
+    bucket_id = 'productos'
+    and exists (select 1 from public.profiles where id = auth.uid() and role = 'admin')
+  );
+
+-- Sólo admin puede actualizar archivos
+create policy "Admin can update productos"
+  on storage.objects for update
+  using (
+    bucket_id = 'productos'
+    and exists (select 1 from public.profiles where id = auth.uid() and role = 'admin')
+  );
+
+-- Sólo admin puede eliminar archivos
+create policy "Admin can delete from productos"
+  on storage.objects for delete
+  using (
+    bucket_id = 'productos'
+    and exists (select 1 from public.profiles where id = auth.uid() and role = 'admin')
+  );
+
+-- ================================================
 -- SEED: Promociones iniciales de bancos
 -- ================================================
 insert into public.promotions (title, bank_name, bank_abbr, bank_color, discount_percentage, deal_text, day_name) values

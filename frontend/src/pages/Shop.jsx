@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import { Search, SlidersHorizontal } from "lucide-react";
-import { products, categories } from "../data/products";
+import { useProducts } from "../hooks/useProducts";
 import ProductCard from "../components/ProductCard";
 
 export default function Shop() {
@@ -11,6 +11,7 @@ export default function Shop() {
 
   const [activeCategory, setActiveCategory] = useState(initialCat);
   const [search, setSearch] = useState("");
+  const { products, categories, loading, error } = useProducts();
 
   useEffect(() => { window.scrollTo({ top: 0 }); }, []);
 
@@ -32,7 +33,7 @@ export default function Shop() {
             Nuestros <span>Productos</span>
           </h1>
           <p style={{ color: "var(--muted)", fontSize: "0.95rem", marginTop: 10, fontStyle: "italic" }}>
-            {products.length} productos disponibles · Envío a todo Buenos Aires · Frescos todos los días
+            {loading ? "Cargando productos..." : `${products.length} productos disponibles · Envío a todo Buenos Aires · Frescos todos los días`}
           </p>
 
           <div className="shop-search-wrap">
@@ -79,7 +80,16 @@ export default function Shop() {
           </span>
         </div>
 
-        {filtered.length > 0 ? (
+        {loading ? (
+          <div style={{ textAlign: "center", padding: "80px 20px", color: "var(--muted)", fontStyle: "italic" }}>
+            Cargando productos...
+          </div>
+        ) : error ? (
+          <div style={{ textAlign: "center", padding: "80px 20px", color: "var(--muted)" }}>
+            <div style={{ fontSize: "3rem", marginBottom: 16 }}>⚠️</div>
+            <p style={{ fontSize: "0.9rem", fontStyle: "italic" }}>No se pudieron cargar los productos. Intentá de nuevo más tarde.</p>
+          </div>
+        ) : filtered.length > 0 ? (
           <div className="product-grid" id="product-grid" style={{ paddingBottom: 80 }}>
             {filtered.map((p) => (
               <ProductCard key={p.id} product={p} />
