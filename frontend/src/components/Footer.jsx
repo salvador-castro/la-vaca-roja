@@ -1,5 +1,6 @@
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { MapPin, Phone, Clock } from "lucide-react";
+import { useAuth } from "../context/AuthContext";
 
 const IgIcon = () => (
   <svg
@@ -34,6 +35,13 @@ const FbIcon = () => (
 );
 
 export default function Footer() {
+  const location = useLocation();
+  const { isAdmin } = useAuth();
+
+  if (location.pathname === "/dashboard" && isAdmin) {
+    return null;
+  }
+
   return (
     <footer className="footer" id="footer">
       <div className="container">
