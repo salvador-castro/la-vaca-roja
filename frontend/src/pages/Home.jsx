@@ -19,12 +19,33 @@ function useReveal() {
 
 /* ---- Static data ---- */
 const banks = [
-  { name: "Banco Galicia", abbr: "GAL", color: "#c8102e", discount: "40%", deal: "Visa y Mastercard", days: "Martes" },
-  { name: "BBVA",          abbr: "BBVA",color: "#004a9f", discount: "25%", deal: "Tarjeta BBVA",      days: "Miércoles" },
-  { name: "Santander",     abbr: "SAN", color: "#ec0000", discount: "30%", deal: "Visa y Debit",       days: "Viernes" },
-  { name: "Banco Macro",   abbr: "MCR", color: "#f5a623", discount: "20%", deal: "Todas las tarjetas", days: "Jueves" },
-  { name: "Naranja X",     abbr: "NRJ", color: "#ff6600", discount: "35%", deal: "Naranja Visa",        days: "Sábados" },
-  { name: "Banco Nación",  abbr: "BNA", color: "#1e5fa8", discount: "15%", deal: "Débito BNA",          days: "Lun y Mié" },
+  { 
+    name: "Cuenta DNI", 
+    abbr: "DNI",
+    color: "#007a5e", 
+    discount: "20%", 
+    deal: "Tope: $5000 / mes", 
+    days: "Lun a Vie (Abril)",
+    img: "https://gfjkhzudkctakwcyqmmj.supabase.co/storage/v1/object/public/logosBancos/logoCuentaDNI.png"
+  },
+  { 
+    name: "BBVA", 
+    abbr: "BBVA",
+    color: "#004a9f", 
+    discount: "30%", 
+    deal: "Tope: $12000 / mes", 
+    days: "Martes",
+    img: "https://gfjkhzudkctakwcyqmmj.supabase.co/storage/v1/object/public/logosBancos/logoBBVA.png"
+  },
+  { 
+    name: "Ualá", 
+    abbr: "UAL",
+    color: "#ff3b5c", 
+    discount: "35%", 
+    deal: "Tope: $20000 / mes", 
+    days: "Todos los días",
+    img: "https://gfjkhzudkctakwcyqmmj.supabase.co/storage/v1/object/public/logosBancos/logoUALA.png"
+  },
 ];
 
 const promos = [
@@ -145,12 +166,16 @@ export default function Home() {
                 className="bank-card"
                 style={{ "--bank-color": b.color }}
               >
-                <span
-                  className="bank-abbr-badge"
-                  style={{ color: b.color, borderColor: b.color + "55", background: b.color + "18" }}
-                >
-                  {b.abbr}
-                </span>
+                {b.img ? (
+                  <img src={b.img} alt={b.name} style={{ height: '40px', objectFit: 'contain', marginBottom: '12px', justifySelf: 'start' }} />
+                ) : (
+                  <span
+                    className="bank-abbr-badge"
+                    style={{ color: b.color, borderColor: b.color + "55", background: b.color + "18" }}
+                  >
+                    {b.abbr}
+                  </span>
+                )}
                 <div className="bank-discount">
                   {b.discount}<span> OFF</span>
                 </div>

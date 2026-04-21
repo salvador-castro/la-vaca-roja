@@ -1,12 +1,16 @@
 import { useState, useEffect } from "react";
-import { Users, Shield, User, Search, Pencil, X, Check } from "lucide-react";
+import { Users, Shield, User, Search, Pencil, X, Check, Download } from "lucide-react";
 import { supabase } from "../../lib/supabase";
+import * as XLSX from "xlsx";
+import jsPDF from "jspdf";
+import "jspdf-autotable";
 
 export default function AdminUsers() {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [editModal, setEditModal] = useState(null);
+  const [editForm, setEditForm] = useState({ full_name: "", phone: "", role: "cliente" });
   const [saving, setSaving] = useState(false);
 
   useEffect(() => { fetchUsers(); }, []);
@@ -27,12 +31,58 @@ export default function AdminUsers() {
       u.email?.toLowerCase().includes(search.toLowerCase())
   );
 
-  const handleRoleChange = async (id, newRole) => {
+  const openEdit = (u) => {
+    setEditModal(u);
+    setEditForm({ full_name: u.full_name || "", phone: u.phone || "", role: u.role || "cliente" });
+  };
+
+  const handleUserUpdate = async (e) => {
+    e.preventDefault();
     setSaving(true);
-    await supabase.from("profiles").update({ role: newRole }).eq("id", id);
+    await supabase.from("profiles").update({ 
+      full_name: editForm.full_name,
+      phone: editForm.phone,
+      role: editForm.role 
+    }).eq("id", editModal.id);
     setSaving(false);
     setEditModal(null);
     fetchUsers();
+  };
+
+  const exportToExcel = () => {
+    const data = filtered.map(u => ({
+      ID: u.id,
+      Nombre: u.full_name || "",
+      Email: u.email,
+      Rol: u.role,
+      Telefono: u.phone || "",
+      Registro: new Date(u.created_at).toLocaleDateString("es-AR")
+    }));
+    const worksheet = XLSX.utils.json_to_sheet(data);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Usuarios");
+    XLSX.writeFile(workbook, "usuarios_la_vaca_roja.xlsx");
+  };
+
+  const exportToPDF = () => {
+    const doc = new jsPDF();
+    doc.text("Reporte de Usuarios - La Vaca Roja", 14, 15);
+    
+    const tableData = filtered.map(u => [
+      u.full_name || "—",
+      u.email,
+      u.role,
+      u.phone || "—",
+      new Date(u.created_at).toLocaleDateString("es-AR")
+    ]);
+
+    doc.autoTable({
+      head: [["Nombre", "Email", "Rol", "Teléfono", "Registro"]],
+      body: tableData,
+      startY: 20,
+    });
+    
+    doc.save("usuarios_la_vaca_roja.pdf");
   };
 
   return (
@@ -44,6 +94,14 @@ export default function AdminUsers() {
             {users.filter((u) => u.role === "cliente").length} clientes ·{" "}
             {users.filter((u) => u.role === "admin").length} admins
           </p>
+        </div>
+        <div style={{ display: 'flex', gap: '10px' }}>
+          <button className="btn btn-ghost btn-sm" onClick={exportToPDF}>
+            <Download size={16} /> Exportar PDF
+          </button>
+          <button className="btn btn-primary btn-sm" onClick={exportToExcel}>
+            <Download size={16} /> Exportar Excel
+          </button>
         </div>
       </div>
 
@@ -98,8 +156,8 @@ export default function AdminUsers() {
                     <td className="admin-table-actions">
                       <button
                         className="admin-action-btn edit"
-                        onClick={() => setEditModal(u)}
-                        title="Cambiar rol"
+                        onClick={() => openEdit(u)}
+                        title="Editar usuario"
                       >
                         <Pencil size={15} />
                       </button>
@@ -112,37 +170,56 @@ export default function AdminUsers() {
         </div>
       )}
 
-      {/* Edit role modal */}
+      {/* Edit user modal */}
       {editModal && (
         <div className="admin-modal-overlay" onClick={() => setEditModal(null)}>
-          <div className="admin-modal admin-confirm-modal" onClick={(e) => e.stopPropagation()}>
-            <Users size={36} color="var(--gold)" />
-            <h3>Cambiar rol</h3>
-            <p>
-              <strong>{editModal.full_name || editModal.email}</strong>
-            </p>
-            <p className="admin-table-muted">
-              Rol actual: <strong>{editModal.role}</strong>
-            </p>
-            <div className="admin-modal-footer" style={{ flexDirection: "column", gap: 8 }}>
-              <button
-                className="btn btn-primary"
-                disabled={editModal.role === "admin" || saving}
-                onClick={() => handleRoleChange(editModal.id, "admin")}
-              >
-                <Shield size={15} /> Hacer Admin
-              </button>
-              <button
-                className="btn btn-ghost"
-                disabled={editModal.role === "cliente" || saving}
-                onClick={() => handleRoleChange(editModal.id, "cliente")}
-              >
-                <User size={15} /> Hacer Cliente
-              </button>
-              <button className="btn btn-ghost" onClick={() => setEditModal(null)}>
-                <X size={15} /> Cancelar
-              </button>
+          <div className="admin-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="admin-modal-header">
+              <h3>Editar Usuario</h3>
+              <button className="admin-modal-close" onClick={() => setEditModal(null)}><X size={20} /></button>
             </div>
+            
+            <p className="admin-table-muted" style={{ marginBottom: 15 }}>
+              Editando a: <strong>{editModal.email}</strong>
+            </p>
+
+            <form onSubmit={handleUserUpdate} className="admin-form">
+              <div className="auth-field">
+                <label>Nombre Completo</label>
+                <input 
+                  value={editForm.full_name} 
+                  onChange={e => setEditForm(f => ({...f, full_name: e.target.value}))} 
+                  placeholder="Ej: Juan Pérez" 
+                />
+              </div>
+
+              <div className="auth-field">
+                <label>Teléfono</label>
+                <input 
+                  value={editForm.phone} 
+                  onChange={e => setEditForm(f => ({...f, phone: e.target.value}))} 
+                  placeholder="Ej: +54 11 1234-5678" 
+                />
+              </div>
+
+              <div className="auth-field">
+                <label>Rol</label>
+                <select 
+                  value={editForm.role} 
+                  onChange={e => setEditForm(f => ({...f, role: e.target.value}))}
+                >
+                  <option value="cliente">Cliente</option>
+                  <option value="admin">Administrador</option>
+                </select>
+              </div>
+
+              <div className="admin-modal-footer">
+                <button type="button" className="btn btn-ghost" onClick={() => setEditModal(null)}>Cancelar</button>
+                <button type="submit" className="btn btn-primary" disabled={saving}>
+                  {saving ? <span className="btn-spinner" /> : <><Check size={16} /> Guardar</>}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

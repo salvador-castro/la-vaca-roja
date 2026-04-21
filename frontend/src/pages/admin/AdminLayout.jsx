@@ -48,8 +48,11 @@ export default function AdminLayout() {
       <aside className={`admin-sidebar ${sidebarOpen ? "open" : ""}`}>
         <div className="admin-sidebar-header">
           <Link to="/" className="admin-brand">
-            <span>🥩</span>
-            <span>La Vaca Roja</span>
+            <img 
+              src="https://gfjkhzudkctakwcyqmmj.supabase.co/storage/v1/object/public/logo/logoLaVacaRoja.png" 
+              alt="La Vaca Roja" 
+              style={{ height: '50px', width: 'auto', objectFit: 'contain' }} 
+            />
           </Link>
           <button className="admin-sidebar-close" onClick={() => setSidebarOpen(false)}>
             <X size={20} />

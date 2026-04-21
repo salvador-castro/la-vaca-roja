@@ -49,22 +49,11 @@ export default function Footer() {
           {/* Brand */}
           <div>
             <div className="footer-brand-logo">
-              <span
-                style={{
-                  width: 36,
-                  height: 36,
-                  background: "var(--red)",
-                  borderRadius: 10,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  fontSize: "1rem",
-                  boxShadow: "var(--glow-red)",
-                }}
-              >
-                🥩
-              </span>
-              La Vaca<span>&nbsp;Roja</span>
+              <img 
+                src="https://gfjkhzudkctakwcyqmmj.supabase.co/storage/v1/object/public/logo/logoLaVacaRoja.png" 
+                alt="La Vaca Roja" 
+                style={{ height: '90px', width: 'auto', objectFit: 'contain' }} 
+              />
             </div>
             <p className="footer-desc">
               Más de 20 años llevando los mejores cortes a tu mesa. Calidad
