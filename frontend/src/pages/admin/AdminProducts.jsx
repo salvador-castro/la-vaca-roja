@@ -3,7 +3,7 @@ import { Plus, Pencil, Trash2, X, Check, AlertCircle, Download, Upload, Edit3, I
 import { supabase } from "../../lib/supabase";
 import * as XLSX from "xlsx";
 
-const API = "http://localhost:3000/api/products";
+const API = `${import.meta.env.VITE_API_URL ?? "http://localhost:3000"}/api/products`;
 const CATEGORIES = ["Vacuno", "Cerdo", "Pollo", "Hamburguesas", "Embutidos"];
 
 const CUTS = ["Fino", "Medio", "Grueso"];
