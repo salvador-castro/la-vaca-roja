@@ -114,13 +114,22 @@ export default function CartDrawer() {
                 </div>
                 <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 8 }}>
                   <div className="qty-controls">
-                    <button className="qty-btn" onClick={() => updateQty(item.cartKey, item.qty - 1)} aria-label="Restar">
-                      <Minus size={13} />
-                    </button>
-                    <span className="qty-value">{item.qty}</span>
-                    <button className="qty-btn" onClick={() => updateQty(item.cartKey, item.qty + 1)} aria-label="Sumar">
-                      <Plus size={13} />
-                    </button>
+                    {(() => {
+                      const step = item.unit === "kg" ? 0.5 : 1;
+                      const newQtyDown = parseFloat((item.qty - step).toFixed(1));
+                      const newQtyUp = parseFloat((item.qty + step).toFixed(1));
+                      return (
+                        <>
+                          <button className="qty-btn" onClick={() => updateQty(item.cartKey, newQtyDown)} aria-label="Restar">
+                            <Minus size={13} />
+                          </button>
+                          <span className="qty-value">{item.unit === "kg" ? `${item.qty} kg` : item.qty}</span>
+                          <button className="qty-btn" onClick={() => updateQty(item.cartKey, newQtyUp)} aria-label="Sumar">
+                            <Plus size={13} />
+                          </button>
+                        </>
+                      );
+                    })()}
                   </div>
                   <button className="remove-btn" onClick={() => removeItem(item.cartKey)} aria-label={`Eliminar ${item.name}`} style={{ width: 28, height: 28 }}>
                     <Trash2 size={13} />
