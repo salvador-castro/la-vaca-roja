@@ -84,9 +84,9 @@ export default function Cart() {
             <div className="cart-items" id="cart-items-list">
               {items.map((item) => (
                 <article
-                  key={item.id}
+                  key={item.cartKey}
                   className="cart-item"
-                  id={`cart-item-${item.id}`}
+                  id={`cart-item-${item.cartKey}`}
                 >
                   <img
                     className="cart-item-img"
@@ -118,29 +118,38 @@ export default function Cart() {
                     }}
                   >
                     <div className="qty-controls">
-                      <button
-                        className="qty-btn"
-                        onClick={() => updateQty(item.id, item.qty - 1)}
-                        aria-label="Restar cantidad"
-                        id={`qty-minus-${item.id}`}
-                      >
-                        <Minus size={14} />
-                      </button>
-                      <span className="qty-value">{item.qty}</span>
-                      <button
-                        className="qty-btn"
-                        onClick={() => updateQty(item.id, item.qty + 1)}
-                        aria-label="Sumar cantidad"
-                        id={`qty-plus-${item.id}`}
-                      >
-                        <Plus size={14} />
-                      </button>
+                      {(() => {
+                        const step = item.unit === "kg" ? 0.5 : 1;
+                        const newQtyDown = parseFloat((item.qty - step).toFixed(1));
+                        const newQtyUp = parseFloat((item.qty + step).toFixed(1));
+                        return (
+                          <>
+                            <button
+                              className="qty-btn"
+                              onClick={() => updateQty(item.cartKey, newQtyDown)}
+                              aria-label="Restar cantidad"
+                              id={`qty-minus-${item.cartKey}`}
+                            >
+                              <Minus size={14} />
+                            </button>
+                            <span className="qty-value">{item.unit === "kg" ? `${item.qty} kg` : item.qty}</span>
+                            <button
+                              className="qty-btn"
+                              onClick={() => updateQty(item.cartKey, newQtyUp)}
+                              aria-label="Sumar cantidad"
+                              id={`qty-plus-${item.cartKey}`}
+                            >
+                              <Plus size={14} />
+                            </button>
+                          </>
+                        );
+                      })()}
                     </div>
                     <button
                       className="remove-btn"
-                      onClick={() => removeItem(item.id)}
+                      onClick={() => removeItem(item.cartKey)}
                       aria-label={`Eliminar ${item.name}`}
-                      id={`remove-btn-${item.id}`}
+                      id={`remove-btn-${item.cartKey}`}
                     >
                       <Trash2 size={15} />
                     </button>

@@ -13,7 +13,12 @@ export function CartProvider({ children }) {
 
   const addItem = useCallback((product, variant = null, qty = 1) => {
     const cartKey = makeKey(product.id, variant?.name);
-    const price = product.price;
+    const now = new Date();
+    const promoActive =
+      product.sale_price != null &&
+      (!product.promo_starts_at || new Date(product.promo_starts_at) <= now) &&
+      (!product.promo_ends_at || new Date(product.promo_ends_at) >= now);
+    const price = promoActive ? product.sale_price : product.price;
 
     setItems((prev) => {
       const existing = prev.find((i) => i.cartKey === cartKey);

@@ -25,7 +25,12 @@ export default function ProductCard({ product }) {
   const decrease = () => setQty((q) => parseFloat(Math.max(step, q - step).toFixed(1)));
   const increase = () => setQty((q) => parseFloat((q + step).toFixed(1)));
 
-  const displayPrice = product.price;
+  const now = new Date();
+  const promoActive =
+    product.sale_price != null &&
+    (!product.promo_starts_at || new Date(product.promo_starts_at) <= now) &&
+    (!product.promo_ends_at || new Date(product.promo_ends_at) >= now);
+  const displayPrice = promoActive ? product.sale_price : product.price;
 
   const handleAdd = () => {
     addItem(product, selectedVariant, qty);
@@ -74,8 +79,19 @@ export default function ProductCard({ product }) {
 
         <div className="product-card-footer">
           <div>
-            <div className="product-card-price">{formatPrice(displayPrice * qty)}</div>
-            <span className="product-card-price-unit">{byKg ? `${qty} kg · ${formatPrice(displayPrice)}/kg` : `por ${product.unit}`}</span>
+            {promoActive && (
+              <div style={{ fontSize: "0.75rem", color: "var(--muted)", textDecoration: "line-through" }}>
+                {formatPrice(product.price * qty)}
+              </div>
+            )}
+            <div className="product-card-price" style={promoActive ? { color: "var(--red)" } : undefined}>
+              {formatPrice(displayPrice * qty)}
+            </div>
+            <span className="product-card-price-unit">
+              {byKg
+                ? `${qty} kg · ${formatPrice(displayPrice)}/kg${promoActive ? ` (antes ${formatPrice(product.price)})` : ""}`
+                : `por ${product.unit}`}
+            </span>
           </div>
           <button
             className={`add-to-cart-btn ${added ? "added" : ""}`}
