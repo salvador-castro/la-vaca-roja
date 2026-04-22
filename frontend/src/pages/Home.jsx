@@ -64,7 +64,7 @@ const features = [
 export default function Home() {
   useReveal();
   const { products, loading } = useProducts();
-  const featured = products.slice(0, 4);
+  const featured = products.filter((p) => p.featured).slice(0, 8);
 
   return (
     <main id="home-page">

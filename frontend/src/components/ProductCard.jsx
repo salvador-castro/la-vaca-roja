@@ -9,24 +9,26 @@ const formatPrice = (p) =>
     maximumFractionDigits: 0,
   }).format(p);
 
-const badgeMap = {
-  premium: { label: "Premium", cls: "badge-premium" },
-  promo: { label: "Oferta", cls: "badge-promo" },
-  new: { label: "Nuevo", cls: "badge-new" },
-};
+const isKg = (unit) => unit === "kg";
 
 export default function ProductCard({ product }) {
   const { addItem } = useCart();
   const [added, setAdded] = useState(false);
   const [selectedVariant, setSelectedVariant] = useState(
-    product.has_variants ? product.variants[1] ?? product.variants[0] : null
+    product.has_variants ? (product.variants[0] ?? null) : null
   );
 
-  const displayPrice =
-    product.price + (selectedVariant?.price_modifier ?? 0);
+  const byKg = isKg(product.unit);
+  const step = byKg ? 0.5 : 1;
+  const [qty, setQty] = useState(step);
+
+  const decrease = () => setQty((q) => parseFloat(Math.max(step, q - step).toFixed(1)));
+  const increase = () => setQty((q) => parseFloat((q + step).toFixed(1)));
+
+  const displayPrice = product.price;
 
   const handleAdd = () => {
-    addItem(product, selectedVariant);
+    addItem(product, selectedVariant, qty);
     setAdded(true);
     setTimeout(() => setAdded(false), 1500);
   };
@@ -35,9 +37,9 @@ export default function ProductCard({ product }) {
     <article className="product-card" id={`product-card-${product.id}`}>
       <div className="product-card-img-wrap">
         <img src={product.image} alt={product.name} loading="lazy" />
-        {product.badge && badgeMap[product.badge] && (
-          <span className={`product-card-badge ${badgeMap[product.badge].cls}`}>
-            {badgeMap[product.badge].label}
+        {product.badge && (
+          <span className="product-card-badge badge-custom">
+            {product.badge}
           </span>
         )}
       </div>
@@ -62,10 +64,18 @@ export default function ProductCard({ product }) {
           </div>
         )}
 
+        <div className="qty-selector">
+          <button className="qty-btn" onClick={decrease} aria-label="Menos" type="button">−</button>
+          <span className="qty-value">
+            {byKg ? `${qty} kg` : qty}
+          </span>
+          <button className="qty-btn" onClick={increase} aria-label="Más" type="button">+</button>
+        </div>
+
         <div className="product-card-footer">
           <div>
-            <div className="product-card-price">{formatPrice(displayPrice)}</div>
-            <span className="product-card-price-unit">por {product.unit}</span>
+            <div className="product-card-price">{formatPrice(displayPrice * qty)}</div>
+            <span className="product-card-price-unit">{byKg ? `${qty} kg · ${formatPrice(displayPrice)}/kg` : `por ${product.unit}`}</span>
           </div>
           <button
             className={`add-to-cart-btn ${added ? "added" : ""}`}
