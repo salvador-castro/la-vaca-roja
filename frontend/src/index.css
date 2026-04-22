@@ -921,6 +921,39 @@ body::after {
   background: rgba(196,137,42,0.08);
 }
 
+/* Qty selector */
+.qty-selector {
+  display: flex;
+  align-items: center;
+  margin: 10px 0 6px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+  width: fit-content;
+}
+.qty-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1.1rem;
+  color: var(--text);
+  padding: 5px 12px;
+  line-height: 1;
+  transition: background var(--transition);
+}
+.qty-btn:hover { background: var(--border); }
+.qty-value {
+  font-family: var(--font-head);
+  font-size: 0.82rem;
+  letter-spacing: 0.04em;
+  padding: 5px 10px;
+  border-left: 1px solid var(--border);
+  border-right: 1px solid var(--border);
+  min-width: 58px;
+  text-align: center;
+  color: var(--text);
+}
+
 .product-card-footer {
   display: flex;
   align-items: center;

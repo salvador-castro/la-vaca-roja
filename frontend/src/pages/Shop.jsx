@@ -87,7 +87,7 @@ export default function Shop() {
         ) : error ? (
           <div style={{ textAlign: "center", padding: "80px 20px", color: "var(--muted)" }}>
             <div style={{ fontSize: "3rem", marginBottom: 16 }}>⚠️</div>
-            <p style={{ fontSize: "0.9rem", fontStyle: "italic" }}>No se pudieron cargar los productos. Intentá de nuevo más tarde.</p>
+            <p style={{ fontSize: "0.9rem", fontStyle: "italic" }}>No se cargaron productos para vender.</p>
           </div>
         ) : filtered.length > 0 ? (
           <div className="product-grid" id="product-grid" style={{ paddingBottom: 80 }}>

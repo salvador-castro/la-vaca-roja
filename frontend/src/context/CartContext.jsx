@@ -11,27 +11,20 @@ export function CartProvider({ children }) {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [coupon, setCoupon] = useState(null);
 
-  const addItem = useCallback((product, variant = null) => {
+  const addItem = useCallback((product, variant = null, qty = 1) => {
     const cartKey = makeKey(product.id, variant?.name);
-    const price = product.price + (variant?.price_modifier ?? 0);
+    const price = product.price;
 
     setItems((prev) => {
       const existing = prev.find((i) => i.cartKey === cartKey);
       if (existing) {
         return prev.map((i) =>
-          i.cartKey === cartKey ? { ...i, qty: i.qty + 1 } : i
+          i.cartKey === cartKey
+            ? { ...i, qty: parseFloat((i.qty + qty).toFixed(3)) }
+            : i
         );
       }
-      return [
-        ...prev,
-        {
-          ...product,
-          cartKey,
-          variant,
-          price,
-          qty: 1,
-        },
-      ];
+      return [...prev, { ...product, cartKey, variant, price, qty }];
     });
     setDrawerOpen(true);
   }, []);

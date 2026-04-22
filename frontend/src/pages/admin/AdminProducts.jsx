@@ -5,12 +5,8 @@ import * as XLSX from "xlsx";
 
 const API = "http://localhost:3000/api/products";
 const CATEGORIES = ["Vacuno", "Cerdo", "Pollo", "Hamburguesas", "Embutidos"];
-const BADGES = [
-  { value: "", label: "Ninguno" },
-  { value: "premium", label: "Premium" },
-  { value: "promo", label: "Oferta" },
-  { value: "new", label: "Nuevo" },
-];
+
+const CUTS = ["Fino", "Medio", "Grueso"];
 
 const empty = {
   name: "",
@@ -19,11 +15,14 @@ const empty = {
   price: "",
   stock: 0,
   image_url: "",
-  badge: "",
+  slug: "",
   unit: "kg",
   active: true,
+  featured: false,
   variants: [],
 };
+
+const makeVariant = () => ({ _id: Date.now() + Math.random(), name: "", cut: "" });
 
 const getToken = async () => {
   const { data: { session } } = await supabase.auth.getSession();
@@ -82,17 +81,20 @@ export default function AdminProducts() {
       .eq("product_id", p.id)
       .order("id");
 
-    const variants = (variantData || []).map((v) => ({
-      name: v.name,
-      // convert stored modifier back to absolute price for the UI
-      price: String(Number(p.price) + Number(v.price_modifier)),
-    }));
+    const variants = (variantData || []).map((v) => {
+      const parts = v.name.split(" - ");
+      const lastPart = parts[parts.length - 1];
+      const cut = parts.length > 1 && CUTS.includes(lastPart) ? lastPart : "";
+      const name = cut ? parts.slice(0, -1).join(" - ") : v.name;
+      return { _id: v.id, name, cut };
+    });
 
     setForm({
       ...p,
       price: String(p.price),
-      badge: p.badge || "",
+      slug: p.badge || "",
       description: p.description || "",
+      featured: p.featured ?? false,
       variants,
     });
     setModal({ mode: "edit", id: p.id });
@@ -104,7 +106,7 @@ export default function AdminProducts() {
   };
 
   const addVariant = () =>
-    setForm((f) => ({ ...f, variants: [...f.variants, { name: "", price: "" }] }));
+    setForm((f) => ({ ...f, variants: [...f.variants, makeVariant()] }));
 
   const removeVariant = (i) =>
     setForm((f) => ({ ...f, variants: f.variants.filter((_, j) => j !== i) }));
@@ -124,12 +126,10 @@ export default function AdminProducts() {
 
     const basePrice = parseFloat(form.price);
 
-    // Each variant stores price_modifier = variant_price - base_price
     const variants = form.variants
-      .filter((v) => v.name.trim() && v.price !== "")
+      .filter((v) => v.name.trim())
       .map((v) => ({
-        name: v.name.trim(),
-        price_modifier: parseFloat(v.price) - basePrice,
+        name: v.cut ? `${v.name.trim()} - ${v.cut}` : v.name.trim(),
         active: true,
       }));
 
@@ -140,9 +140,10 @@ export default function AdminProducts() {
       price: basePrice,
       stock: parseInt(form.stock) || 0,
       image_url: form.image_url || null,
-      badge: form.badge || null,
+      badge: form.slug || null,
       unit: form.unit,
       active: form.active,
+      featured: form.featured,
       has_variants: variants.length > 0,
       variants,
     };
@@ -407,26 +408,24 @@ export default function AdminProducts() {
               {/* Precio base + Stock + Unidad */}
               <div className="admin-form-row">
                 <div className="auth-field">
-                  <label>Precio base *</label>
+                  <label>Precio *</label>
                   <input type="number" value={form.price} onChange={set("price")} placeholder="5000" min="0" step="0.01" required />
                 </div>
                 <div className="auth-field">
-                  <label>Stock</label>
-                  <input type="number" value={form.stock} onChange={set("stock")} placeholder="0" min="0" step="1" />
+                  <label>Stock *</label>
+                  <input type="number" value={form.stock} onChange={set("stock")} placeholder="0" min="0" step="1" required />
                 </div>
                 <div className="auth-field">
-                  <label>Unidad</label>
-                  <input value={form.unit} onChange={set("unit")} placeholder="kg, bife, pollo, pack..." />
+                  <label>Unidad *</label>
+                  <input value={form.unit} onChange={set("unit")} placeholder="kg, bife, pollo, pack..." required />
                 </div>
               </div>
 
-              {/* Badge + Imagen */}
+              {/* Slug + Imagen */}
               <div className="admin-form-row">
                 <div className="auth-field">
-                  <label>Badge</label>
-                  <select value={form.badge} onChange={set("badge")}>
-                    {BADGES.map((b) => <option key={b.value} value={b.value}>{b.label}</option>)}
-                  </select>
+                  <label>Slug</label>
+                  <input value={form.slug} onChange={set("slug")} placeholder="Ej: premium, oferta, sin-tac..." />
                 </div>
                 <div className="auth-field">
                   <label>Imagen</label>
@@ -452,27 +451,30 @@ export default function AdminProducts() {
                 {form.variants.length === 0 && (
                   <p style={{ fontSize: "0.8rem", color: "var(--muted)", fontStyle: "italic", marginBottom: 8 }}>
                     Sin opciones: el cliente compra al precio base. Agregá opciones para permitir elegir
-                    corte, grosor o unidad de venta (ej: "Por bife - Fino", "1 kg - Sin cortar").
+                    tipo de venta y grosor (ej: "Por bife" + Medio, "1 kg" + Sin corte).
                   </p>
                 )}
 
                 {form.variants.map((v, i) => (
-                  <div key={i} style={{ display: "flex", gap: 8, marginBottom: 8, alignItems: "center" }}>
+                  <div key={v._id} style={{ display: "flex", gap: 8, marginBottom: 8, alignItems: "center" }}>
                     <input
-                      placeholder='Ej: "Por bife - Medio", "1 kg - Sin cortar"'
+                      placeholder='Ej: "Por bife", "1 kg", "Entero"'
                       value={v.name}
                       onChange={(e) => updateVariant(i, "name", e.target.value)}
                       style={{ flex: 2 }}
+                      required
                     />
-                    <input
-                      type="number"
-                      placeholder="Precio $"
-                      value={v.price}
-                      min="0"
-                      step="0.01"
-                      onChange={(e) => updateVariant(i, "price", e.target.value)}
+                    <select
+                      value={v.cut}
+                      onChange={(e) => updateVariant(i, "cut", e.target.value)}
                       style={{ flex: 1 }}
-                    />
+                      title="Grosor del corte (opcional)"
+                    >
+                      <option value="">Sin corte</option>
+                      <option value="Fino">Fino</option>
+                      <option value="Medio">Medio</option>
+                      <option value="Grueso">Grueso</option>
+                    </select>
                     <button
                       type="button"
                       onClick={() => removeVariant(i)}
@@ -487,11 +489,6 @@ export default function AdminProducts() {
                   <Plus size={14} /> Agregar opción
                 </button>
 
-                {form.variants.length > 0 && form.price && (
-                  <p style={{ fontSize: "0.75rem", color: "var(--muted)", marginTop: 6, fontStyle: "italic" }}>
-                    Precio base: {formatPrice(parseFloat(form.price) || 0)} — cada opción muestra su propio precio al cliente.
-                  </p>
-                )}
               </div>
 
               {/* Activo */}
@@ -499,6 +496,10 @@ export default function AdminProducts() {
                 <label className="admin-check-label">
                   <input type="checkbox" checked={form.active} onChange={set("active")} />
                   Producto activo
+                </label>
+                <label className="admin-check-label">
+                  <input type="checkbox" checked={form.featured} onChange={set("featured")} />
+                  Destacado en home
                 </label>
               </div>
 
