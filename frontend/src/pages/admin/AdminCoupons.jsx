@@ -69,12 +69,13 @@ export default function AdminCoupons() {
     setError("");
 
     const payload = {
-      ...form,
-      code: form.code.toUpperCase(),
+      code: form.code.toUpperCase().trim(),
+      discount_type: form.discount_type,
       discount_value: parseFloat(form.discount_value),
       min_order_amount: form.min_order_amount ? parseFloat(form.min_order_amount) : 0,
       max_uses: form.max_uses ? parseInt(form.max_uses) : null,
       expires_at: form.expires_at || null,
+      active: form.active,
     };
 
     let err;
@@ -85,7 +86,10 @@ export default function AdminCoupons() {
     }
 
     setSaving(false);
-    if (err) { setError(err.message.includes("unique") ? "Ese código ya existe." : "Error al guardar."); return; }
+    if (err) {
+      setError(err.message.includes("unique") ? "Ese código ya existe." : err.message);
+      return;
+    }
     setModal(null);
     fetchCoupons();
   };
@@ -188,12 +192,12 @@ export default function AdminCoupons() {
             {error && <div className="auth-error"><AlertCircle size={15} /><span>{error}</span></div>}
             <form onSubmit={handleSave} className="admin-form">
               <div className="auth-field">
-                <label>Código *</label>
+                <label>Código * <span style={{ fontWeight: 400, color: "var(--text-muted)", fontSize: "0.8em" }}>(podés escribir el tuyo o generarlo)</span></label>
                 <div style={{ display: "flex", gap: 8 }}>
                   <input
                     value={form.code}
                     onChange={set("code")}
-                    placeholder="VERANO20"
+                    placeholder="Ej: LAVACAROJA"
                     required
                     style={{ textTransform: "uppercase", flex: 1 }}
                   />
@@ -219,12 +223,12 @@ export default function AdminCoupons() {
 
               <div className="admin-form-row">
                 <div className="auth-field">
-                  <label>Compra mínima (ARS)</label>
-                  <input type="number" value={form.min_order_amount} onChange={set("min_order_amount")} placeholder="0" min="0" />
+                  <label>Compra mínima (ARS) <span style={{ fontWeight: 400, color: "var(--text-muted)", fontSize: "0.8em" }}>(vacío = sin mínimo)</span></label>
+                  <input type="number" value={form.min_order_amount} onChange={set("min_order_amount")} placeholder="Sin mínimo" min="0" />
                 </div>
                 <div className="auth-field">
-                  <label>Usos máximos</label>
-                  <input type="number" value={form.max_uses} onChange={set("max_uses")} placeholder="Sin límite" min="1" />
+                  <label>Usos máximos <span style={{ fontWeight: 400, color: "var(--text-muted)", fontSize: "0.8em" }}>(vacío = ilimitado)</span></label>
+                  <input type="number" value={form.max_uses} onChange={set("max_uses")} placeholder="Ilimitado" min="1" />
                 </div>
               </div>
 
