@@ -25,6 +25,15 @@ export default function Navbar() {
 
   const isActive = (path) => (location.pathname === path ? "active" : "");
 
+  const handleInicio = () => {
+    if (location.pathname !== "/") {
+      navigate("/");
+      setTimeout(() => window.scrollTo({ top: 0, behavior: "smooth" }), 100);
+    } else {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  };
+
   /* Si estamos en otra ruta, primero navegamos a home y luego hacemos scroll */
   const handleHashLink = (hash) => {
     if (location.pathname !== "/") {
@@ -59,7 +68,7 @@ export default function Navbar() {
           {!isDashboardAdmin && (
             <ul className="nav-links">
               <li>
-                <Link to="/" className={isActive("/")}>Inicio</Link>
+                <button className="nav-link-btn" onClick={handleInicio}>Inicio</button>
               </li>
               <li>
                 <Link to="/shop" className={isActive("/shop")}>Tienda</Link>
@@ -128,7 +137,7 @@ export default function Navbar() {
       <div className={`nav-mobile-menu ${mobileOpen ? "open" : ""}`} id="nav-mobile-menu">
         {!isDashboardAdmin && (
           <>
-            <Link to="/" className={isActive("/")}>🏠 Inicio</Link>
+            <button className="nav-mobile-link-btn" onClick={handleInicio}>🏠 Inicio</button>
             <Link to="/shop" className={isActive("/shop")}>🛒 Tienda</Link>
             <button className="nav-mobile-link-btn" onClick={() => handleHashLink("promos")}>
               🔥 Promociones

@@ -1420,6 +1420,17 @@ body::after {
   transition: color var(--transition);
 }
 .footer-links a:hover { color: var(--text); }
+.footer-link-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  font-size: 0.9rem;
+  color: var(--muted);
+  transition: color var(--transition);
+  text-align: left;
+}
+.footer-link-btn:hover { color: var(--text); }
 
 .footer-bottom {
   margin-top: 48px;

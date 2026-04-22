@@ -1,4 +1,4 @@
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { MapPin, Phone, Clock } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 
@@ -36,7 +36,17 @@ const FbIcon = () => (
 
 export default function Footer() {
   const location = useLocation();
+  const navigate = useNavigate();
   const { isAdmin } = useAuth();
+
+  const handleInicio = () => {
+    if (location.pathname !== "/") {
+      navigate("/");
+      setTimeout(() => window.scrollTo({ top: 0, behavior: "smooth" }), 100);
+    } else {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  };
 
   if (location.pathname === "/dashboard" && isAdmin) {
     return null;
@@ -121,7 +131,7 @@ export default function Footer() {
             <div className="footer-col-title">Navegación</div>
             <ul className="footer-links">
               <li>
-                <Link to="/">Inicio</Link>
+                <button className="footer-link-btn" onClick={handleInicio}>Inicio</button>
               </li>
               <li>
                 <Link to="/shop">Tienda</Link>
