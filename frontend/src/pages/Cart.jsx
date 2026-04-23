@@ -66,10 +66,8 @@ export default function Cart() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Error al iniciar el pago");
 
-      // En desarrollo se usa sandbox_init_point; en producción, init_point
-      const checkoutUrl = import.meta.env.DEV
-        ? data.sandbox_init_point
-        : data.init_point;
+      const useSandbox = import.meta.env.DEV || import.meta.env.VITE_MP_SANDBOX === "true";
+      const checkoutUrl = useSandbox ? data.sandbox_init_point : data.init_point;
 
       window.location.href = checkoutUrl;
     } catch (err) {
