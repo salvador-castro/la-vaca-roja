@@ -9,13 +9,14 @@ export default function AdminOrders() {
   const [saving, setSaving] = useState(false);
   const [newStatus, setNewStatus] = useState("");
 
-  const STATUS_OPTS = ['pending', 'confirmed', 'preparing', 'delivered', 'cancelled'];
+  const STATUS_OPTS = ['pending', 'confirmed', 'preparing', 'shipping', 'delivered', 'cancelled'];
   const STATUS_LABELS = {
     pending: "Pendiente",
     confirmed: "Confirmado",
     preparing: "Preparando",
+    shipping: "Enviando",
     delivered: "Entregado",
-    cancelled: "Cancelado"
+    cancelled: "Cancelado",
   };
 
   useEffect(() => { fetchOrders(); }, []);
@@ -97,7 +98,11 @@ export default function AdminOrders() {
                     <td>{new Date(o.created_at).toLocaleString("es-AR")}</td>
                     <td>{formatPrice(o.total)}</td>
                     <td>
-                      <span className={`admin-status-pill ${o.status === 'delivered' ? 'active' : o.status === 'cancelled' ? 'inactive' : 'pending'}`}>
+                      <span className={`admin-status-pill ${
+                        o.status === 'delivered' ? 'active' :
+                        o.status === 'cancelled' ? 'inactive' :
+                        o.status === 'confirmed' ? 'active' : 'pending'
+                      }`}>
                         {STATUS_LABELS[o.status] || o.status}
                       </span>
                     </td>

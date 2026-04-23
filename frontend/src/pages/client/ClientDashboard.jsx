@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { ShoppingBag, User, Package, Clock, CheckCircle, XCircle, Truck } from "lucide-react";
+import { ShoppingBag, Package, Clock, CheckCircle, XCircle, Truck, BadgeCheck } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import { supabase } from "../../lib/supabase";
 
@@ -8,11 +8,12 @@ const formatPrice = (p) =>
   new Intl.NumberFormat("es-AR", { style: "currency", currency: "ARS", maximumFractionDigits: 0 }).format(p ?? 0);
 
 const statusMap = {
-  pending: { label: "Pendiente", icon: Clock, color: "#f5a623" },
+  pending:   { label: "Pendiente",  icon: Clock,       color: "#f5a623" },
   confirmed: { label: "Confirmado", icon: CheckCircle, color: "#4caf50" },
-  preparing: { label: "Preparando", icon: Package, color: "#2196f3" },
-  delivered: { label: "Entregado", icon: Truck, color: "#8bc34a" },
-  cancelled: { label: "Cancelado", icon: XCircle, color: "#f44336" },
+  preparing: { label: "Preparando", icon: Package,     color: "#2196f3" },
+  shipping:  { label: "Enviando",   icon: Truck,       color: "#9c27b0" },
+  delivered: { label: "Entregado",  icon: BadgeCheck,  color: "#8bc34a" },
+  cancelled: { label: "Cancelado",  icon: XCircle,     color: "#f44336" },
 };
 
 export default function ClientDashboard() {
