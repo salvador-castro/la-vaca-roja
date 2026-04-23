@@ -1,15 +1,31 @@
-import { createContext, useContext, useState, useCallback } from "react";
+import { createContext, useContext, useState, useCallback, useEffect } from "react";
 
 const CartContext = createContext(null);
+
+const STORAGE_KEY = "lvr_cart";
 
 /* cartKey permite tener el mismo producto en distintas variantes */
 const makeKey = (productId, variantName) =>
   variantName ? `${productId}-${variantName}` : String(productId);
 
+function loadFromStorage() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return { items: [], coupon: null };
+    return JSON.parse(raw);
+  } catch {
+    return { items: [], coupon: null };
+  }
+}
+
 export function CartProvider({ children }) {
-  const [items, setItems] = useState([]);
+  const [items, setItems] = useState(() => loadFromStorage().items);
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const [coupon, setCoupon] = useState(null);
+  const [coupon, setCoupon] = useState(() => loadFromStorage().coupon);
+
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ items, coupon }));
+  }, [items, coupon]);
 
   const addItem = useCallback((product, variant = null, qty = 1) => {
     const cartKey = makeKey(product.id, variant?.name);
@@ -51,6 +67,7 @@ export function CartProvider({ children }) {
   const clearCart = useCallback(() => {
     setItems([]);
     setCoupon(null);
+    localStorage.removeItem(STORAGE_KEY);
   }, []);
 
   const subtotal = items.reduce((sum, i) => sum + i.price * i.qty, 0);
