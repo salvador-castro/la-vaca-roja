@@ -143,7 +143,7 @@ create table if not exists public.orders (
   id bigserial primary key,
   user_id uuid references auth.users not null,
   status text not null default 'pending'
-    check (status in ('pending', 'confirmed', 'preparing', 'delivered', 'cancelled')),
+    check (status in ('pending', 'confirmed', 'preparing', 'shipping', 'delivered', 'cancelled')),
   subtotal numeric(10,2) not null default 0,
   coupon_discount numeric(10,2) default 0,
   total numeric(10,2) not null,
@@ -199,6 +199,16 @@ create policy "Admin can manage all order items"
   on order_items for all using (
     exists (select 1 from profiles where id = auth.uid() and role = 'admin')
   );
+
+-- ================================================
+-- GRANTS (necesarios cuando se crea via SQL editor)
+-- ================================================
+grant usage on schema public to authenticated, anon;
+
+grant all on public.orders to authenticated;
+grant all on public.order_items to authenticated;
+grant usage, select on sequence public.orders_id_seq to authenticated;
+grant usage, select on sequence public.order_items_id_seq to authenticated;
 
 -- ================================================
 -- TRIGGER: Crear perfil automático al registrarse
