@@ -18,6 +18,7 @@ export default function Cart() {
   const navigate = useNavigate();
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [checkoutError, setCheckoutError] = useState(null);
+  const [notes, setNotes] = useState("");
 
   const formatPrice = (p) =>
     new Intl.NumberFormat("es-AR", {
@@ -49,6 +50,7 @@ export default function Cart() {
           line_total: parseFloat((item.price * item.qty).toFixed(2)),
         })),
         coupon_id: coupon?.id ?? null,
+        notes: notes.trim() || null,
         shipping,
       };
 
@@ -280,6 +282,37 @@ export default function Cart() {
             <div className="summary-row total">
               <span>Total</span>
               <span>{formatPrice(finalTotal)}</span>
+            </div>
+
+            <div style={{ marginBottom: 16 }}>
+              <label
+                htmlFor="order-notes"
+                style={{ display: "block", fontSize: "0.82rem", color: "var(--muted)", marginBottom: 6 }}
+              >
+                Comentarios del pedido <span style={{ fontStyle: "italic" }}>(opcional)</span>
+              </label>
+              <textarea
+                id="order-notes"
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                placeholder="Ej: sin sal, entregar por la tarde, apto celíaco..."
+                rows={3}
+                style={{
+                  width: "100%",
+                  resize: "vertical",
+                  padding: "10px 12px",
+                  background: "var(--surface)",
+                  border: "1px solid var(--border)",
+                  borderRadius: "var(--radius)",
+                  color: "var(--text)",
+                  fontSize: "0.85rem",
+                  fontFamily: "inherit",
+                  outline: "none",
+                  transition: "border-color 0.2s",
+                }}
+                onFocus={(e) => (e.target.style.borderColor = "var(--red)")}
+                onBlur={(e) => (e.target.style.borderColor = "var(--border)")}
+              />
             </div>
 
             {checkoutError && (
