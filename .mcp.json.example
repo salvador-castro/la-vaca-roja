@@ -1,0 +1,18 @@
+{
+  "mcpServers": {
+    "mercadopago-test": {
+      "type": "sse",
+      "url": "https://mcp.mercadopago.com/mcp",
+      "headers": {
+        "Authorization": "Bearer TEST-xxxx"
+      }
+    },
+    "mercadopago-prod": {
+      "type": "sse",
+      "url": "https://mcp.mercadopago.com/mcp",
+      "headers": {
+        "Authorization": "Bearer APP_USR-xxxx"
+      }
+    }
+  }
+}

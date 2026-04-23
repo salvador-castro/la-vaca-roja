@@ -12,6 +12,9 @@ import Cart from "./pages/Cart";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
+import PaymentSuccess from "./pages/PaymentSuccess";
+import PaymentPending from "./pages/PaymentPending";
+import PaymentFailure from "./pages/PaymentFailure";
 
 export default function App() {
   return (
@@ -35,6 +38,9 @@ export default function App() {
                 </PrivateRoute>
               }
             />
+            <Route path="/pago/exitoso" element={<PaymentSuccess />} />
+            <Route path="/pago/pendiente" element={<PaymentPending />} />
+            <Route path="/pago/fallido" element={<PaymentFailure />} />
           </Routes>
           <Footer />
         </CartProvider>
