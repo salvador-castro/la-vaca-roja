@@ -1,16 +1,23 @@
-import { Link } from "react-router-dom";
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import {
   Trash2,
   Minus,
   Plus,
   ShoppingBag,
   ArrowLeft,
-  ShieldCheck,
+  Loader,
 } from "lucide-react";
 import { useCart } from "../context/CartContext";
+import { supabase } from "../lib/supabase";
+
+const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:3000";
 
 export default function Cart() {
-  const { items, removeItem, updateQty, total, clearCart } = useCart();
+  const { items, removeItem, updateQty, total, clearCart, coupon } = useCart();
+  const navigate = useNavigate();
+  const [checkoutLoading, setCheckoutLoading] = useState(false);
+  const [checkoutError, setCheckoutError] = useState(null);
 
   const formatPrice = (p) =>
     new Intl.NumberFormat("es-AR", {
@@ -21,6 +28,53 @@ export default function Cart() {
 
   const shipping = total > 15000 ? 0 : 1500;
   const finalTotal = total + shipping;
+
+  const handleCheckout = async () => {
+    setCheckoutLoading(true);
+    setCheckoutError(null);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        navigate("/login");
+        return;
+      }
+
+      const payload = {
+        items: items.map((item) => ({
+          product_id: item.id,
+          product_name: item.name,
+          variant_name: item.variant?.name ?? null,
+          quantity: item.qty,
+          unit_price: item.price,
+          line_total: parseFloat((item.price * item.qty).toFixed(2)),
+        })),
+        coupon_id: coupon?.id ?? null,
+        shipping,
+      };
+
+      const res = await fetch(`${API_URL}/api/payment/create-preference`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Error al iniciar el pago");
+
+      // En desarrollo se usa sandbox_init_point; en producción, init_point
+      const checkoutUrl = import.meta.env.DEV
+        ? data.sandbox_init_point
+        : data.init_point;
+
+      window.location.href = checkoutUrl;
+    } catch (err) {
+      setCheckoutError(err.message);
+      setCheckoutLoading(false);
+    }
+  };
 
   if (items.length === 0) {
     return (
@@ -228,8 +282,36 @@ export default function Cart() {
               <span>{formatPrice(finalTotal)}</span>
             </div>
 
-            <button className="checkout-btn" id="checkout-btn">
-              Finalizar Compra →
+            {checkoutError && (
+              <div
+                style={{
+                  marginBottom: 12,
+                  padding: "10px 12px",
+                  background: "rgba(200,16,46,0.08)",
+                  border: "1px solid rgba(200,16,46,0.2)",
+                  borderRadius: "var(--radius)",
+                  fontSize: "0.82rem",
+                  color: "var(--red)",
+                }}
+              >
+                {checkoutError}
+              </div>
+            )}
+            <button
+              className="checkout-btn"
+              id="checkout-btn"
+              onClick={handleCheckout}
+              disabled={checkoutLoading}
+              style={{ opacity: checkoutLoading ? 0.7 : 1 }}
+            >
+              {checkoutLoading ? (
+                <span style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
+                  <Loader size={16} style={{ animation: "spin 1s linear infinite" }} />
+                  Procesando...
+                </span>
+              ) : (
+                "Finalizar Compra →"
+              )}
             </button>
 
             {/* Trust badges */}

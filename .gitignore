@@ -12,6 +12,9 @@ build
 .env.local
 .env.*
 
+# MCP (contiene tokens — usar .mcp.json.example como plantilla)
+.mcp.json
+
 # logs
 logs
 *.log
