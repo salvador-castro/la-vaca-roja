@@ -2291,6 +2291,14 @@ body::after {
 }
 .client-order-footer strong { color: var(--text); }
 
+.client-order-actions {
+  display: flex;
+  gap: 10px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+  margin-top: 4px;
+}
+
 /* ===================================================
    SCROLL REVEAL
    =================================================== */

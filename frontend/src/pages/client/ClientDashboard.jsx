@@ -1,8 +1,10 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { ShoppingBag, Package, Clock, CheckCircle, XCircle, Truck, BadgeCheck } from "lucide-react";
+import { ShoppingBag, Package, Clock, CheckCircle, XCircle, Truck, BadgeCheck, RefreshCw } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import { supabase } from "../../lib/supabase";
+
+const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:3000";
 
 const formatPrice = (p) =>
   new Intl.NumberFormat("es-AR", { style: "currency", currency: "ARS", maximumFractionDigits: 0 }).format(p ?? 0);
@@ -20,7 +22,7 @@ export default function ClientDashboard() {
   const { user, profile, signOut } = useAuth();
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
-  const navigate = null;
+  const [actionLoading, setActionLoading] = useState(null);
 
   useEffect(() => { fetchOrders(); }, [user]);
 
@@ -34,6 +36,55 @@ export default function ClientDashboard() {
       .order("created_at", { ascending: false });
     setOrders(data || []);
     setLoading(false);
+  };
+
+  const handleRetryPayment = async (orderId) => {
+    setActionLoading(orderId + "_retry");
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+      const res = await fetch(`${API_URL}/api/payment/retry`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ order_id: orderId }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Error al reintentar el pago");
+      const useSandbox = import.meta.env.DEV || import.meta.env.VITE_MP_SANDBOX === "true";
+      window.location.href = useSandbox ? data.sandbox_init_point : data.init_point;
+    } catch (err) {
+      alert(err.message);
+      setActionLoading(null);
+    }
+  };
+
+  const handleCancel = async (orderId) => {
+    if (!confirm("¿Cancelar este pedido?")) return;
+    setActionLoading(orderId + "_cancel");
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+      const res = await fetch(`${API_URL}/api/orders/${orderId}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ status: "cancelled" }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Error al cancelar el pedido");
+      setOrders((prev) =>
+        prev.map((o) => (o.id === orderId ? { ...o, status: "cancelled" } : o))
+      );
+    } catch (err) {
+      alert(err.message);
+    } finally {
+      setActionLoading(null);
+    }
   };
 
   return (
@@ -120,6 +171,26 @@ export default function ClientDashboard() {
                     <span>Total</span>
                     <strong>{formatPrice(order.total)}</strong>
                   </div>
+
+                  {order.status === "pending" && (
+                    <div className="client-order-actions">
+                      <button
+                        className="btn btn-primary btn-sm"
+                        disabled={actionLoading !== null}
+                        onClick={() => handleRetryPayment(order.id)}
+                      >
+                        <RefreshCw size={14} />
+                        {actionLoading === order.id + "_retry" ? "Redirigiendo…" : "Reintentar pago"}
+                      </button>
+                      <button
+                        className="btn btn-outline btn-sm"
+                        disabled={actionLoading !== null}
+                        onClick={() => handleCancel(order.id)}
+                      >
+                        {actionLoading === order.id + "_cancel" ? "Cancelando…" : "Cancelar pedido"}
+                      </button>
+                    </div>
+                  )}
                 </div>
               );
             })}
