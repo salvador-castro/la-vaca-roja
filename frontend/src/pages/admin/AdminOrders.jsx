@@ -196,6 +196,7 @@ export default function AdminOrders() {
       {loading ? (
         <div className="admin-loading"><div className="auth-loading-spinner" /></div>
       ) : (
+        <>
         <div className="admin-table-wrap">
           <table className="admin-table">
             <thead>
@@ -275,6 +276,7 @@ export default function AdminOrders() {
             </button>
           </div>
         )}
+        </>
       )}
 
       {modal && (
