@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useCallback, useEffect } from "react";
+import { supabase } from "../lib/supabase";
 
 const CartContext = createContext(null);
 
@@ -26,6 +27,17 @@ export function CartProvider({ children }) {
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify({ items, coupon }));
   }, [items, coupon]);
+
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      if (event === "SIGNED_OUT") {
+        setItems([]);
+        setCoupon(null);
+        localStorage.removeItem(STORAGE_KEY);
+      }
+    });
+    return () => subscription.unsubscribe();
+  }, []);
 
   const addItem = useCallback((product, variant = null, qty = 1) => {
     const cartKey = makeKey(product.id, variant?.name);
