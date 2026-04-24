@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import {
   ShoppingBag, Package, Clock, CheckCircle, XCircle,
   Truck, BadgeCheck, RefreshCw, User, Save, AlertCircle,
+  MapPin,
 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import { supabase } from "../../lib/supabase";
@@ -13,13 +14,16 @@ const formatPrice = (p) =>
   new Intl.NumberFormat("es-AR", { style: "currency", currency: "ARS", maximumFractionDigits: 0 }).format(p ?? 0);
 
 const statusMap = {
-  pending:   { label: "Pendiente",  icon: Clock,       color: "#f5a623" },
-  confirmed: { label: "Confirmado", icon: CheckCircle, color: "#4caf50" },
-  preparing: { label: "Preparando", icon: Package,     color: "#2196f3" },
-  shipping:  { label: "Enviando",   icon: Truck,       color: "#9c27b0" },
-  delivered: { label: "Entregado",  icon: BadgeCheck,  color: "#8bc34a" },
-  cancelled: { label: "Cancelado",  icon: XCircle,     color: "#f44336" },
+  pending:   { label: "Pago pendiente",   icon: Clock,       color: "#f5a623" },
+  confirmed: { label: "Pago confirmado",  icon: CheckCircle, color: "#4caf50" },
+  preparing: { label: "Preparando",       icon: Package,     color: "#2196f3" },
+  shipping:  { label: "Enviando",         icon: Truck,       color: "#9c27b0" },
+  delivered: { label: "Entregado",        icon: BadgeCheck,  color: "#8bc34a" },
+  cancelled: { label: "Cancelado",        icon: XCircle,     color: "#f44336" },
 };
+
+// El cliente puede pedir cancelación/devolución en estos estados
+const CANCELLABLE_STATUSES = ["pending", "confirmed", "preparing"];
 
 export default function ClientDashboard() {
   const { user, profile, updateProfile } = useAuth();
@@ -28,8 +32,9 @@ export default function ClientDashboard() {
   const [ordersLoading, setOrdersLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(null);
 
-  // Profile form state
-  const [profileForm, setProfileForm] = useState({ full_name: "", phone: "", email: "" });
+  const [profileForm, setProfileForm] = useState({
+    full_name: "", phone: "", email: "", address: "",
+  });
   const [profileSaving, setProfileSaving] = useState(false);
   const [profileMsg, setProfileMsg] = useState(null);
 
@@ -39,6 +44,7 @@ export default function ClientDashboard() {
         full_name: profile.full_name || "",
         phone: profile.phone || "",
         email: user?.email || "",
+        address: profile.address || "",
       });
     }
   }, [profile, user]);
@@ -65,6 +71,7 @@ export default function ClientDashboard() {
       full_name: profileForm.full_name,
       phone: profileForm.phone,
       email: profileForm.email,
+      address: profileForm.address,
     });
     setProfileSaving(false);
     if (error) {
@@ -103,8 +110,12 @@ export default function ClientDashboard() {
     }
   };
 
-  const handleCancel = async (orderId) => {
-    if (!confirm("¿Cancelar este pedido?")) return;
+  const handleCancel = async (orderId, isPaid) => {
+    const msg = isPaid
+      ? "¿Solicitar devolución de este pedido? El equipo se pondrá en contacto para gestionar el reembolso."
+      : "¿Cancelar este pedido?";
+    if (!confirm(msg)) return;
+
     setActionLoading(orderId + "_cancel");
     try {
       const { data: { session } } = await supabase.auth.getSession();
@@ -157,7 +168,7 @@ export default function ClientDashboard() {
           </div>
           <div className="client-action-card client-action-stat">
             <strong>{orders.filter((o) => o.status === "pending").length}</strong>
-            <span>Pendientes</span>
+            <span>Pendientes de pago</span>
           </div>
         </div>
 
@@ -194,6 +205,9 @@ export default function ClientDashboard() {
             <div className="client-orders-list">
               {orders.map((order) => {
                 const { label, icon: Icon, color } = statusMap[order.status] || { label: order.status, icon: Clock, color: "#888" };
+                const isPaid = ["confirmed", "preparing"].includes(order.status);
+                const canCancel = CANCELLABLE_STATUSES.includes(order.status);
+
                 return (
                   <div key={order.id} className="client-order-card">
                     <div className="client-order-header">
@@ -221,27 +235,49 @@ export default function ClientDashboard() {
                       </div>
                     )}
 
+                    {order.notes && (
+                      <div
+                        style={{
+                          margin: "8px 0",
+                          padding: "8px 12px",
+                          background: "var(--surface)",
+                          borderRadius: "var(--radius)",
+                          fontSize: "0.8rem",
+                          color: "var(--muted)",
+                          fontStyle: "italic",
+                        }}
+                      >
+                        💬 {order.notes}
+                      </div>
+                    )}
+
                     <div className="client-order-footer">
                       <span>Total</span>
                       <strong>{formatPrice(order.total)}</strong>
                     </div>
 
-                    {order.status === "pending" && (
+                    {canCancel && (
                       <div className="client-order-actions">
-                        <button
-                          className="btn btn-primary btn-sm"
-                          disabled={actionLoading !== null}
-                          onClick={() => handleRetryPayment(order.id)}
-                        >
-                          <RefreshCw size={14} />
-                          {actionLoading === order.id + "_retry" ? "Redirigiendo…" : "Reintentar pago"}
-                        </button>
+                        {order.status === "pending" && (
+                          <button
+                            className="btn btn-primary btn-sm"
+                            disabled={actionLoading !== null}
+                            onClick={() => handleRetryPayment(order.id)}
+                          >
+                            <RefreshCw size={14} />
+                            {actionLoading === order.id + "_retry" ? "Redirigiendo…" : "Reintentar pago"}
+                          </button>
+                        )}
                         <button
                           className="btn btn-outline btn-sm"
                           disabled={actionLoading !== null}
-                          onClick={() => handleCancel(order.id)}
+                          onClick={() => handleCancel(order.id, isPaid)}
                         >
-                          {actionLoading === order.id + "_cancel" ? "Cancelando…" : "Cancelar pedido"}
+                          {actionLoading === order.id + "_cancel"
+                            ? "Procesando…"
+                            : isPaid
+                            ? "Solicitar devolución"
+                            : "Cancelar pedido"}
                         </button>
                       </div>
                     )}
@@ -292,6 +328,20 @@ export default function ClientDashboard() {
                 />
                 <span style={{ fontSize: "0.78rem", color: "var(--muted)", fontStyle: "italic" }}>
                   Si cambiás el email, recibirás un link de confirmación en la nueva dirección.
+                </span>
+              </div>
+
+              <div className="auth-field">
+                <label style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                  <MapPin size={14} /> Dirección de envío
+                </label>
+                <input
+                  value={profileForm.address}
+                  onChange={(e) => setProfileForm((f) => ({ ...f, address: e.target.value }))}
+                  placeholder="Ej: Av. Corrientes 1234, CABA"
+                />
+                <span style={{ fontSize: "0.78rem", color: "var(--muted)", fontStyle: "italic" }}>
+                  Necesaria para recibir pedidos a domicilio.
                 </span>
               </div>
 

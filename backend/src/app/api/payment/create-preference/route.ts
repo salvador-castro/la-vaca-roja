@@ -30,11 +30,12 @@ export async function POST(req: NextRequest) {
   if (!user) return corsError("Debe estar autenticado para comprar", 401);
 
   const body = await req.json();
-  const { items, coupon_id, notes, shipping } = body as {
+  const { items, coupon_id, notes, shipping, delivery_method } = body as {
     items: CartItem[];
     coupon_id?: number;
     notes?: string;
     shipping: number;
+    delivery_method?: string;
   };
 
   if (!items?.length) return corsError("El carrito está vacío", 400);
@@ -77,6 +78,7 @@ export async function POST(req: NextRequest) {
       coupon_discount: couponDiscount,
       total,
       notes: notes ?? null,
+      delivery_method: delivery_method ?? "delivery",
     })
     .select()
     .single();
