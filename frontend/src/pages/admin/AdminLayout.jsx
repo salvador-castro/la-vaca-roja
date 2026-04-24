@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard, Package, Tag, Users, Ticket,
-  BarChart2, LogOut, Menu, X, ChevronRight, ShoppingCart
+  BarChart2, LogOut, Menu, X, ChevronRight, ShoppingCart, SlidersHorizontal,
 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import AdminProducts from "./AdminProducts";
@@ -11,23 +11,26 @@ import AdminUsers from "./AdminUsers";
 import AdminCoupons from "./AdminCoupons";
 import AdminOrders from "./AdminOrders";
 import AdminReports from "./AdminReports";
+import AdminSettings from "./AdminSettings";
 
 const navItems = [
-  { id: "reports", label: "Resumen", icon: LayoutDashboard },
-  { id: "products", label: "Productos", icon: Package },
-  { id: "promotions", label: "Promociones", icon: Tag },
-  { id: "users", label: "Usuarios", icon: Users },
-  { id: "coupons", label: "Cupones", icon: Ticket },
-  { id: "orders", label: "Pedidos", icon: ShoppingCart },
+  { id: "reports",   label: "Resumen",       icon: LayoutDashboard },
+  { id: "products",  label: "Productos",      icon: Package },
+  { id: "promotions",label: "Promociones",    icon: Tag },
+  { id: "users",     label: "Usuarios",       icon: Users },
+  { id: "coupons",   label: "Cupones",        icon: Ticket },
+  { id: "orders",    label: "Pedidos",        icon: ShoppingCart },
+  { id: "settings",  label: "Configuración",  icon: SlidersHorizontal },
 ];
 
 const views = {
-  reports: AdminReports,
-  products: AdminProducts,
+  reports:    AdminReports,
+  products:   AdminProducts,
   promotions: AdminPromotions,
-  users: AdminUsers,
-  coupons: AdminCoupons,
-  orders: AdminOrders,
+  users:      AdminUsers,
+  coupons:    AdminCoupons,
+  orders:     AdminOrders,
+  settings:   AdminSettings,
 };
 
 export default function AdminLayout() {

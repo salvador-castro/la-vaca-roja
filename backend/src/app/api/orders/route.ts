@@ -28,9 +28,9 @@ export async function GET(req: NextRequest) {
     // Attach profile data manually (no direct FK between orders and profiles)
     const userIds = [...new Set((orders ?? []).map((o) => o.user_id as string))];
     const { data: profiles } = await supabase
-      .from("profiles").select("id, full_name, email").in("id", userIds);
+      .from("profiles").select("id, full_name, email, phone, address").in("id", userIds);
 
-    const profileMap: Record<string, { id: string; full_name: string; email: string }> = {};
+    const profileMap: Record<string, { id: string; full_name: string; email: string; phone: string | null; address: string | null }> = {};
     (profiles ?? []).forEach((p) => { profileMap[p.id] = p; });
 
     const data = (orders ?? []).map((o) => ({ ...o, profiles: profileMap[o.user_id] ?? null }));
@@ -46,7 +46,7 @@ export async function GET(req: NextRequest) {
   if (error) return corsError(error.message, 500);
 
   const { data: ownProfile } = await supabase
-    .from("profiles").select("id, full_name, email").eq("id", user.id).single();
+    .from("profiles").select("id, full_name, email, phone, address").eq("id", user.id).single();
 
   return corsResponse((data ?? []).map((o) => ({ ...o, profiles: ownProfile ?? null })));
 }
