@@ -29,6 +29,8 @@ export default function AdminOrders() {
   const [modal, setModal] = useState(null);
   const [saving, setSaving] = useState(false);
   const [newStatus, setNewStatus] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const PAGE_SIZE = 10;
 
   // Filtros
   const [filterStatus, setFilterStatus] = useState("");
@@ -93,6 +95,7 @@ export default function AdminOrders() {
     setFilterClient("");
     setFilterDateFrom("");
     setFilterDateTo("");
+    setCurrentPage(1);
   };
 
   const hasFilters = filterStatus || filterClient || filterDateFrom || filterDateTo;
@@ -105,6 +108,15 @@ export default function AdminOrders() {
     if (filterDateTo && new Date(o.created_at) > new Date(filterDateTo + "T23:59:59")) return false;
     return true;
   });
+
+  const totalPages = Math.ceil(filteredOrders.length / PAGE_SIZE);
+  const paginatedOrders = filteredOrders.slice(
+    (currentPage - 1) * PAGE_SIZE,
+    currentPage * PAGE_SIZE
+  );
+
+  // Reset to page 1 when filters change
+  useEffect(() => { setCurrentPage(1); }, [filterStatus, filterClient, filterDateFrom, filterDateTo]);
 
   const formatPrice = (p) =>
     new Intl.NumberFormat("es-AR", { style: "currency", currency: "ARS" }).format(p ?? 0);
@@ -204,7 +216,7 @@ export default function AdminOrders() {
                   </td>
                 </tr>
               ) : (
-                filteredOrders.map((o) => {
+                paginatedOrders.map((o) => {
                   const color = STATUS_COLORS[o.status] || "#888";
                   return (
                     <tr key={o.id}>
@@ -239,6 +251,30 @@ export default function AdminOrders() {
             </tbody>
           </table>
         </div>
+
+        {totalPages > 1 && (
+          <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 12, marginTop: 16 }}>
+            <button
+              className="btn btn-ghost"
+              style={{ padding: "6px 14px", fontSize: "0.85rem" }}
+              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+              disabled={currentPage === 1}
+            >
+              ‹ Anterior
+            </button>
+            <span style={{ fontSize: "0.85rem", color: "var(--muted)" }}>
+              Página {currentPage} de {totalPages}
+            </span>
+            <button
+              className="btn btn-ghost"
+              style={{ padding: "6px 14px", fontSize: "0.85rem" }}
+              onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+              disabled={currentPage === totalPages}
+            >
+              Siguiente ›
+            </button>
+          </div>
+        )}
       )}
 
       {modal && (
