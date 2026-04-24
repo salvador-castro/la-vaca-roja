@@ -22,3 +22,7 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# SQL scripts sensibles
+src/lib/schema.sql
+src/lib/security_patch.sql
