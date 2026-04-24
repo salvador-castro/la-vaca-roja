@@ -67,7 +67,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     return corsError("Solo podés cancelar pedidos pendientes", 400);
   }
 
-  const validStatuses = ["pending", "confirmed", "preparing", "delivered", "cancelled"];
+  const validStatuses = ["pending", "confirmed", "preparing", "shipping", "delivered", "cancelled"];
   if (!validStatuses.includes(status)) {
     return corsError("Estado inválido", 400);
   }

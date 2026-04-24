@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Eye, EyeOff, UserPlus, AlertCircle, CheckCircle } from "lucide-react";
+import { Eye, EyeOff, UserPlus, AlertCircle, Mail } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 
 export default function Register() {
@@ -36,29 +36,33 @@ export default function Register() {
       );
     } else {
       setSuccess(true);
-      setTimeout(() => navigate("/login"), 3000);
     }
   };
 
-  if (success) {
-    return (
-      <main className="auth-page">
-        <div className="auth-card auth-success-card">
-          <CheckCircle size={56} color="var(--red)" />
-          <h2 className="auth-title">¡Cuenta creada!</h2>
-          <p className="auth-subtitle">
-            Revisá tu email para confirmar tu cuenta y luego podés ingresar.
-          </p>
-          <Link to="/login" className="btn btn-primary" style={{ marginTop: 16 }}>
-            Ir al ingreso
-          </Link>
-        </div>
-      </main>
-    );
-  }
-
   return (
     <main className="auth-page">
+      {success && (
+        <div style={{
+          position: "fixed", inset: 0, background: "rgba(0,0,0,0.55)",
+          display: "flex", alignItems: "center", justifyContent: "center",
+          zIndex: 1000, padding: "1rem",
+        }}>
+          <div style={{
+            background: "var(--surface)", borderRadius: "var(--radius-lg)",
+            padding: "2.5rem 2rem", maxWidth: 420, width: "100%", textAlign: "center",
+            boxShadow: "0 8px 40px rgba(0,0,0,0.25)",
+          }}>
+            <Mail size={52} color="var(--red)" style={{ display: "block", margin: "0 auto 1rem" }} />
+            <h3 style={{ marginBottom: "0.5rem", fontSize: "1.25rem" }}>¡Cuenta creada!</h3>
+            <p style={{ color: "var(--muted)", marginBottom: "1.75rem", lineHeight: 1.6, fontSize: "0.95rem" }}>
+              Se necesita confirmar tu email para poder iniciar sesión. Revisá tu bandeja de entrada y hacé clic en el enlace de confirmación.
+            </p>
+            <Link to="/login" className="btn btn-primary" style={{ display: "inline-flex" }}>
+              Ir al ingreso
+            </Link>
+          </div>
+        </div>
+      )}
       <div className="auth-card">
         <div className="auth-brand">
           <Link to="/" className="auth-logo">

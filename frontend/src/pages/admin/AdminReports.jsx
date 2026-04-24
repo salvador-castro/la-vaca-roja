@@ -5,6 +5,8 @@ import {
 } from "lucide-react";
 import { supabase } from "../../lib/supabase";
 
+const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:3000";
+
 const formatPrice = (p) =>
   new Intl.NumberFormat("es-AR", {
     style: "currency",
@@ -13,15 +15,17 @@ const formatPrice = (p) =>
   }).format(p ?? 0);
 
 const statusMap = {
-  pending: { label: "Pendiente", icon: Clock, color: "#f5a623" },
-  confirmed: { label: "Confirmado", icon: CheckCircle, color: "#4caf50" },
-  preparing: { label: "Preparando", icon: Package, color: "#2196f3" },
-  delivered: { label: "Entregado", icon: Truck, color: "#8bc34a" },
-  cancelled: { label: "Cancelado", icon: XCircle, color: "#f44336" },
+  pending:   { label: "Pendiente",       icon: Clock,        color: "#f5a623" },
+  confirmed: { label: "Pago confirmado", icon: CheckCircle,  color: "#4caf50" },
+  preparing: { label: "Preparando",      icon: Package,      color: "#2196f3" },
+  shipping:  { label: "Enviando",        icon: Truck,        color: "#9c27b0" },
+  delivered: { label: "Entregado",       icon: CheckCircle,  color: "#8bc34a" },
+  cancelled: { label: "Cancelado",       icon: XCircle,      color: "#f44336" },
 };
 
 export default function AdminReports() {
   const [stats, setStats] = useState(null);
+  const [allOrders, setAllOrders] = useState([]);
   const [recentOrders, setRecentOrders] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -31,40 +35,45 @@ export default function AdminReports() {
 
   const fetchData = async () => {
     setLoading(true);
-    const [ordersRes, productsRes, usersRes, itemsRes] = await Promise.all([
-      supabase.from("orders").select("id, status, total, created_at"),
-      supabase.from("products").select("id, active"),
-      supabase.from("profiles").select("id, role, created_at"),
-      supabase.from("order_items").select("product_name, quantity, line_total"),
-    ]);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token;
+      const headers = { Authorization: `Bearer ${token}` };
 
-    const orders = ordersRes.data || [];
-    const products = productsRes.data || [];
-    const users = usersRes.data || [];
+      const [ordersRes, usersRes, productsRes] = await Promise.all([
+        fetch(`${API_URL}/api/orders`, { headers }).then((r) => r.json()),
+        fetch(`${API_URL}/api/users`, { headers }).then((r) => r.json()),
+        supabase.from("products").select("id, active"),
+      ]);
 
-    const totalRevenue = orders
-      .filter((o) => o.status === "delivered")
-      .reduce((s, o) => s + (o.total || 0), 0);
+      const orders = Array.isArray(ordersRes) ? ordersRes : [];
+      const users = Array.isArray(usersRes) ? usersRes : [];
+      const products = productsRes.data || [];
 
-    const pending = orders.filter((o) => o.status === "pending").length;
-    const delivered = orders.filter((o) => o.status === "delivered").length;
+      const totalRevenue = orders
+        .filter((o) => ["confirmed", "preparing", "shipping", "delivered"].includes(o.status))
+        .reduce((s, o) => s + (o.total || 0), 0);
 
-    setStats({
-      totalOrders: orders.length,
-      totalRevenue,
-      activeProducts: products.filter((p) => p.active).length,
-      totalUsers: users.filter((u) => u.role === "cliente").length,
-      pendingOrders: pending,
-      deliveredOrders: delivered,
-    });
+      const pending = orders.filter((o) => o.status === "pending").length;
+      const delivered = orders.filter((o) => o.status === "delivered").length;
 
-    setRecentOrders(
-      orders
-        .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
-        .slice(0, 8)
-    );
+      setStats({
+        totalOrders: orders.length,
+        totalRevenue,
+        activeProducts: products.filter((p) => p.active).length,
+        totalUsers: users.filter((u) => u.role === "cliente").length,
+        pendingOrders: pending,
+        deliveredOrders: delivered,
+      });
 
-    setLoading(false);
+      const sorted = [...orders].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+      setAllOrders(orders);
+      setRecentOrders(sorted.slice(0, 8));
+    } catch (err) {
+      console.error("Error fetching admin data:", err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   if (loading) {
@@ -82,7 +91,7 @@ export default function AdminReports() {
       value: formatPrice(stats?.totalRevenue),
       icon: TrendingUp,
       color: "#4caf50",
-      sub: "Pedidos entregados",
+      sub: "Pedidos confirmados y entregados",
     },
     {
       label: "Total pedidos",
@@ -133,13 +142,13 @@ export default function AdminReports() {
         })}
       </div>
 
-      {/* Status breakdown */}
+      {/* Status breakdown — usa TODOS los pedidos */}
       <div className="admin-section-header" style={{ marginTop: 32 }}>
         <h2>Estado de pedidos</h2>
       </div>
       <div className="admin-status-grid">
         {Object.entries(statusMap).map(([key, { label, icon: Icon, color }]) => {
-          const count = recentOrders.filter((o) => o.status === key).length;
+          const count = allOrders.filter((o) => o.status === key).length;
           return (
             <div className="admin-status-card" key={key}>
               <Icon size={18} style={{ color }} />
