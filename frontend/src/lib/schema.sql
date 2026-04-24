@@ -224,7 +224,7 @@ begin
   );
   return new;
 end;
-$$ language plpgsql security definer;
+$$ language plpgsql security definer set search_path = '';
 
 drop trigger if exists on_auth_user_created on auth.users;
 create trigger on_auth_user_created
@@ -240,10 +240,10 @@ insert into storage.buckets (id, name, public)
 values ('productos', 'productos', true)
 on conflict do nothing;
 
--- Lectura pública (para mostrar las imágenes en el frontend)
-create policy "Public can view productos"
-  on storage.objects for select
-  using (bucket_id = 'productos');
+-- Sin policy SELECT pública: el bucket es público, las imágenes son accesibles
+-- vía URL directa (CDN) sin necesitar RLS. Evitamos así que cualquiera liste
+-- todos los archivos con storage.from('productos').list().
+-- Si algún día se necesita listing en el admin, agregar una policy autenticada.
 
 -- Sólo admin puede subir archivos
 create policy "Admin can upload to productos"
