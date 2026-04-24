@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 import {
   corsResponse, corsError, handleOptions,
-  createApiClient, createAdminClient, getAuthUser,
+  createApiClient, getAuthUser,
 } from "@/utils/supabase/api";
 
 export async function OPTIONS() { return handleOptions(); }
@@ -18,8 +18,7 @@ export async function GET(req: NextRequest) {
   const isAdmin = profile?.role === "admin";
 
   if (isAdmin) {
-    const admin = createAdminClient();
-    const { data: orders, error } = await admin
+    const { data: orders, error } = await supabase
       .from("orders")
       .select("*, order_items(*)")
       .order("created_at", { ascending: false });
@@ -28,7 +27,7 @@ export async function GET(req: NextRequest) {
 
     // Attach profile data manually (no direct FK between orders and profiles)
     const userIds = [...new Set((orders ?? []).map((o) => o.user_id as string))];
-    const { data: profiles } = await admin
+    const { data: profiles } = await supabase
       .from("profiles").select("id, full_name, email").in("id", userIds);
 
     const profileMap: Record<string, { id: string; full_name: string; email: string }> = {};
