@@ -24,7 +24,8 @@ export default function Cart() {
     new Intl.NumberFormat("es-AR", {
       style: "currency",
       currency: "ARS",
-      maximumFractionDigits: 0,
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 2,
     }).format(p);
 
   const shipping = total > 1 ? 0 : 1500; // TODO: restaurar a total > 15000 antes de producción
