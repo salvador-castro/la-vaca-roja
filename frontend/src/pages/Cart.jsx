@@ -28,16 +28,10 @@ export default function Cart() {
       maximumFractionDigits: 2,
     }).format(p);
 
-  const shipping = total > 1 ? 0 : 1500; // TODO: restaurar a total > 15000 antes de producción
+  const shipping = total > 15000 ? 0 : 1500;
   const finalTotal = total + shipping;
 
-  const MIN_ORDER_AMOUNT = 1; // TODO: restaurar al monto real antes de producción
-
   const handleCheckout = async () => {
-    if (total < MIN_ORDER_AMOUNT) {
-      setCheckoutError(`El monto mínimo de compra es ${formatPrice(MIN_ORDER_AMOUNT)}.`);
-      return;
-    }
     setCheckoutLoading(true);
     setCheckoutError(null);
     try {
@@ -280,7 +274,7 @@ export default function Cart() {
                   lineHeight: 1.5,
                 }}
               >
-                🚀 Sumá {formatPrice(1 - total)} más para envío gratis
+                🚀 Sumá {formatPrice(15000 - total)} más para envío gratis
               </div>
             )}
 
