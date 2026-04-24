@@ -30,7 +30,13 @@ export default function Cart() {
   const shipping = total > 15000 ? 0 : 1500;
   const finalTotal = total + shipping;
 
+  const MIN_ORDER_AMOUNT = 1; // TODO: restaurar al monto real antes de producción
+
   const handleCheckout = async () => {
+    if (total < MIN_ORDER_AMOUNT) {
+      setCheckoutError(`El monto mínimo de compra es ${formatPrice(MIN_ORDER_AMOUNT)}.`);
+      return;
+    }
     setCheckoutLoading(true);
     setCheckoutError(null);
     try {
