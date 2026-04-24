@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 import {
   corsResponse, corsError, handleOptions,
-  createApiClient, createAdminClient, getAuthUser,
+  createApiClient, getAuthUser,
 } from "@/utils/supabase/api";
 
 export async function OPTIONS() { return handleOptions(); }
@@ -17,9 +17,8 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     .from("profiles").select("role").eq("id", user.id).single();
 
   const isAdmin = profile?.role === "admin";
-  const db = isAdmin ? createAdminClient() : supabase;
 
-  const { data, error } = await db
+  const { data, error } = await supabase
     .from("orders")
     .select("*, order_items(*)")
     .eq("id", id)
@@ -49,9 +48,8 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     .from("profiles").select("role").eq("id", user.id).single();
 
   const isAdmin = profile?.role === "admin";
-  const db = isAdmin ? createAdminClient() : supabase;
 
-  const { data: order } = await db
+  const { data: order } = await supabase
     .from("orders").select("*").eq("id", id).single();
 
   if (!order) return corsError("Pedido no encontrado", 404);
@@ -74,7 +72,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     return corsError("Estado inválido", 400);
   }
 
-  const { data, error } = await db
+  const { data, error } = await supabase
     .from("orders")
     .update({ status, updated_at: new Date().toISOString() })
     .eq("id", id)
