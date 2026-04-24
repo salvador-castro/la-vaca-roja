@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!;
+const supabaseServiceKey = process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY!;
 
 const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:5173";
 
@@ -23,6 +24,11 @@ export function corsError(message: string, status = 400) {
 
 export function handleOptions() {
   return new NextResponse(null, { status: 204, headers: corsHeaders });
+}
+
+/* Service-role client — bypasses RLS, use only after verifying auth in code */
+export function createAdminClient() {
+  return createServerSupabase(supabaseUrl, supabaseServiceKey);
 }
 
 /* Create a Supabase client authenticated with the request's JWT */

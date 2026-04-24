@@ -58,17 +58,17 @@ export default function AdminReports() {
       const delivered = orders.filter((o) => o.status === "delivered").length;
 
       setStats({
-        totalOrders: orders.length,
+        totalOrders: orders.filter((o) => o.status !== "cancelled").length,
         totalRevenue,
         activeProducts: products.filter((p) => p.active).length,
-        totalUsers: users.filter((u) => u.role === "cliente").length,
+        totalUsers: users.length,
         pendingOrders: pending,
         deliveredOrders: delivered,
       });
 
       const sorted = [...orders].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
       setAllOrders(orders);
-      setRecentOrders(sorted.slice(0, 8));
+      setRecentOrders(sorted.slice(0, 5));
     } catch (err) {
       console.error("Error fetching admin data:", err);
     } finally {
