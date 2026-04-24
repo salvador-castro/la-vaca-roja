@@ -41,8 +41,8 @@ export default function AdminReports() {
       const headers = { Authorization: `Bearer ${token}` };
 
       const [ordersRes, usersRes, productsRes] = await Promise.all([
-        fetch(`${API_URL}/api/orders`, { headers }).then((r) => r.json()),
-        fetch(`${API_URL}/api/users`, { headers }).then((r) => r.json()),
+        fetch(`${API_URL}/api/orders`, { headers }).then((r) => r.json()).catch(() => []),
+        fetch(`${API_URL}/api/users`, { headers }).then((r) => r.json()).catch(() => []),
         supabase.from("products").select("id, active"),
       ]);
 
