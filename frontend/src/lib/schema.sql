@@ -141,7 +141,7 @@ create policy "Admin can manage coupons"
 -- ================================================
 create table if not exists public.orders (
   id bigserial primary key,
-  user_id uuid references auth.users not null,
+  user_id uuid references auth.users on delete cascade not null,
   status text not null default 'pending'
     check (status in ('pending', 'confirmed', 'preparing', 'shipping', 'delivered', 'cancelled')),
   subtotal numeric(10,2) not null default 0,

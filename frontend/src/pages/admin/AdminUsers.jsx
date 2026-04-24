@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Users, Shield, User, Search, Pencil, X, Check, Download } from "lucide-react";
+import { Users, Shield, User, Search, Pencil, X, Check, Download, KeyRound, Mail } from "lucide-react";
 import { supabase } from "../../lib/supabase";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
@@ -11,6 +11,7 @@ export default function AdminUsers() {
   const [editModal, setEditModal] = useState(null);
   const [editForm, setEditForm] = useState({ full_name: "", phone: "", role: "cliente" });
   const [saving, setSaving] = useState(false);
+  const [resetMsg, setResetMsg] = useState(null);
 
   useEffect(() => { fetchUsers(); }, []);
 
@@ -38,26 +39,39 @@ export default function AdminUsers() {
   const handleUserUpdate = async (e) => {
     e.preventDefault();
     setSaving(true);
-    await supabase.from("profiles").update({ 
+    await supabase.from("profiles").update({
       full_name: editForm.full_name,
       phone: editForm.phone,
-      role: editForm.role 
+      role: editForm.role,
     }).eq("id", editModal.id);
     setSaving(false);
     setEditModal(null);
     fetchUsers();
   };
 
+  const handleResetPassword = async (email) => {
+    setResetMsg(null);
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/reset-password`,
+    });
+    if (error) {
+      setResetMsg({ type: "error", text: `Error: ${error.message}` });
+    } else {
+      setResetMsg({ type: "ok", text: `Email de reseteo enviado a ${email}` });
+    }
+    setTimeout(() => setResetMsg(null), 5000);
+  };
+
   const exportToPDF = () => {
     const doc = new jsPDF();
     doc.text("Reporte de Usuarios - La Vaca Roja", 14, 15);
-    
-    const tableData = filtered.map(u => [
+
+    const tableData = filtered.map((u) => [
       u.full_name || "—",
       u.email,
       u.role,
       u.phone || "—",
-      new Date(u.created_at).toLocaleDateString("es-AR")
+      new Date(u.created_at).toLocaleDateString("es-AR"),
     ]);
 
     autoTable(doc, {
@@ -65,7 +79,7 @@ export default function AdminUsers() {
       body: tableData,
       startY: 20,
     });
-    
+
     doc.save("usuarios_la_vaca_roja.pdf");
   };
 
@@ -79,12 +93,19 @@ export default function AdminUsers() {
             {users.filter((u) => u.role === "admin").length} admins
           </p>
         </div>
-        <div style={{ display: 'flex', gap: '10px' }}>
+        <div style={{ display: "flex", gap: "10px" }}>
           <button className="btn btn-primary btn-sm" onClick={exportToPDF}>
             <Download size={16} /> Exportar PDF
           </button>
         </div>
       </div>
+
+      {resetMsg && (
+        <div className={`client-profile-msg ${resetMsg.type}`} style={{ maxWidth: 480 }}>
+          <Mail size={15} />
+          {resetMsg.text}
+        </div>
+      )}
 
       {/* Search */}
       <div className="admin-search-bar">
@@ -105,6 +126,7 @@ export default function AdminUsers() {
               <tr>
                 <th>Usuario</th>
                 <th>Email</th>
+                <th>Teléfono</th>
                 <th>Rol</th>
                 <th>Registro</th>
                 <th>Acciones</th>
@@ -112,7 +134,7 @@ export default function AdminUsers() {
             </thead>
             <tbody>
               {filtered.length === 0 ? (
-                <tr><td colSpan={5} className="admin-table-empty">No se encontraron usuarios</td></tr>
+                <tr><td colSpan={6} className="admin-table-empty">No se encontraron usuarios</td></tr>
               ) : (
                 filtered.map((u) => (
                   <tr key={u.id}>
@@ -125,6 +147,7 @@ export default function AdminUsers() {
                       </div>
                     </td>
                     <td className="admin-table-muted">{u.email}</td>
+                    <td className="admin-table-muted">{u.phone || <span style={{ opacity: 0.4 }}>—</span>}</td>
                     <td>
                       <span className={`admin-role-tag ${u.role}`}>
                         {u.role === "admin" ? <Shield size={12} /> : <User size={12} />}
@@ -141,6 +164,14 @@ export default function AdminUsers() {
                         title="Editar usuario"
                       >
                         <Pencil size={15} />
+                      </button>
+                      <button
+                        className="admin-action-btn"
+                        onClick={() => handleResetPassword(u.email)}
+                        title="Enviar reset de contraseña"
+                        style={{ color: "var(--muted)" }}
+                      >
+                        <KeyRound size={15} />
                       </button>
                     </td>
                   </tr>
@@ -159,35 +190,35 @@ export default function AdminUsers() {
               <h3>Editar Usuario</h3>
               <button className="admin-modal-close" onClick={() => setEditModal(null)}><X size={20} /></button>
             </div>
-            
-            <p className="admin-table-muted" style={{ marginBottom: 15 }}>
+
+            <p className="admin-table-muted" style={{ padding: "0 24px 4px", marginTop: 16 }}>
               Editando a: <strong>{editModal.email}</strong>
             </p>
 
             <form onSubmit={handleUserUpdate} className="admin-form">
               <div className="auth-field">
                 <label>Nombre Completo</label>
-                <input 
-                  value={editForm.full_name} 
-                  onChange={e => setEditForm(f => ({...f, full_name: e.target.value}))} 
-                  placeholder="Ej: Juan Pérez" 
+                <input
+                  value={editForm.full_name}
+                  onChange={(e) => setEditForm((f) => ({ ...f, full_name: e.target.value }))}
+                  placeholder="Ej: Juan Pérez"
                 />
               </div>
 
               <div className="auth-field">
                 <label>Teléfono</label>
-                <input 
-                  value={editForm.phone} 
-                  onChange={e => setEditForm(f => ({...f, phone: e.target.value}))} 
-                  placeholder="Ej: +54 11 1234-5678" 
+                <input
+                  value={editForm.phone}
+                  onChange={(e) => setEditForm((f) => ({ ...f, phone: e.target.value }))}
+                  placeholder="Ej: +54 11 1234-5678"
                 />
               </div>
 
               <div className="auth-field">
                 <label>Rol</label>
-                <select 
-                  value={editForm.role} 
-                  onChange={e => setEditForm(f => ({...f, role: e.target.value}))}
+                <select
+                  value={editForm.role}
+                  onChange={(e) => setEditForm((f) => ({ ...f, role: e.target.value }))}
                 >
                   <option value="cliente">Cliente</option>
                   <option value="admin">Administrador</option>

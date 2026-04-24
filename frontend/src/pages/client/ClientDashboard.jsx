@@ -1,6 +1,9 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { ShoppingBag, Package, Clock, CheckCircle, XCircle, Truck, BadgeCheck, RefreshCw } from "lucide-react";
+import {
+  ShoppingBag, Package, Clock, CheckCircle, XCircle,
+  Truck, BadgeCheck, RefreshCw, User, Save, AlertCircle,
+} from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import { supabase } from "../../lib/supabase";
 
@@ -19,23 +22,62 @@ const statusMap = {
 };
 
 export default function ClientDashboard() {
-  const { user, profile, signOut } = useAuth();
+  const { user, profile, updateProfile } = useAuth();
+  const [tab, setTab] = useState("orders");
   const [orders, setOrders] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [ordersLoading, setOrdersLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(null);
+
+  // Profile form state
+  const [profileForm, setProfileForm] = useState({ full_name: "", phone: "", email: "" });
+  const [profileSaving, setProfileSaving] = useState(false);
+  const [profileMsg, setProfileMsg] = useState(null);
+
+  useEffect(() => {
+    if (profile) {
+      setProfileForm({
+        full_name: profile.full_name || "",
+        phone: profile.phone || "",
+        email: user?.email || "",
+      });
+    }
+  }, [profile, user]);
 
   useEffect(() => { fetchOrders(); }, [user]);
 
   const fetchOrders = async () => {
     if (!user) return;
-    setLoading(true);
+    setOrdersLoading(true);
     const { data } = await supabase
       .from("orders")
       .select("*, order_items(*)")
       .eq("user_id", user.id)
       .order("created_at", { ascending: false });
     setOrders(data || []);
-    setLoading(false);
+    setOrdersLoading(false);
+  };
+
+  const handleProfileSave = async (e) => {
+    e.preventDefault();
+    setProfileSaving(true);
+    setProfileMsg(null);
+    const { error } = await updateProfile({
+      full_name: profileForm.full_name,
+      phone: profileForm.phone,
+      email: profileForm.email,
+    });
+    setProfileSaving(false);
+    if (error) {
+      setProfileMsg({ type: "error", text: error.message || "Error al guardar los datos." });
+    } else {
+      const emailChanged = profileForm.email !== user?.email;
+      setProfileMsg({
+        type: "ok",
+        text: emailChanged
+          ? "Datos guardados. Revisá tu nuevo email para confirmar el cambio de dirección."
+          : "Datos actualizados correctamente.",
+      });
+    }
   };
 
   const handleRetryPayment = async (orderId) => {
@@ -119,81 +161,146 @@ export default function ClientDashboard() {
           </div>
         </div>
 
-        {/* Orders */}
-        <div className="client-section-title">
-          <Package size={20} />
-          Mis pedidos
+        {/* Tabs */}
+        <div className="client-tabs">
+          <button
+            className={`client-tab${tab === "orders" ? " active" : ""}`}
+            onClick={() => setTab("orders")}
+          >
+            <Package size={16} /> Mis pedidos
+          </button>
+          <button
+            className={`client-tab${tab === "profile" ? " active" : ""}`}
+            onClick={() => setTab("profile")}
+          >
+            <User size={16} /> Mis datos
+          </button>
         </div>
 
-        {loading ? (
-          <div className="admin-loading"><div className="auth-loading-spinner" /></div>
-        ) : orders.length === 0 ? (
-          <div className="client-empty-orders">
-            <ShoppingBag size={48} opacity={0.3} />
-            <h3>Todavía no hiciste pedidos</h3>
-            <p>Explorá nuestra tienda y encontrá los mejores cortes de carne.</p>
-            <Link to="/shop" className="btn btn-primary" style={{ marginTop: 16 }}>
-              Ver tienda
-            </Link>
-          </div>
-        ) : (
-          <div className="client-orders-list">
-            {orders.map((order) => {
-              const { label, icon: Icon, color } = statusMap[order.status] || { label: order.status, icon: Clock, color: "#888" };
-              return (
-                <div key={order.id} className="client-order-card">
-                  <div className="client-order-header">
-                    <span className="client-order-id">Pedido #{order.id}</span>
-                    <span className="admin-status-pill" style={{ color, borderColor: color }}>
-                      <Icon size={12} /> {label}
-                    </span>
-                    <span className="admin-table-date">
-                      {new Date(order.created_at).toLocaleDateString("es-AR")}
-                    </span>
-                  </div>
-
-                  {order.order_items?.length > 0 && (
-                    <div className="client-order-items">
-                      {order.order_items.map((item) => (
-                        <div key={item.id} className="client-order-item">
-                          <span>{item.product_name}</span>
-                          {item.variant_name && (
-                            <span className="client-order-variant">{item.variant_name}</span>
-                          )}
-                          <span className="client-order-qty">x{item.quantity}</span>
-                          <span>{formatPrice(item.line_total)}</span>
-                        </div>
-                      ))}
+        {/* Orders tab */}
+        {tab === "orders" && (
+          ordersLoading ? (
+            <div className="admin-loading"><div className="auth-loading-spinner" /></div>
+          ) : orders.length === 0 ? (
+            <div className="client-empty-orders">
+              <ShoppingBag size={48} opacity={0.3} />
+              <h3>Todavía no hiciste pedidos</h3>
+              <p>Explorá nuestra tienda y encontrá los mejores cortes de carne.</p>
+              <Link to="/shop" className="btn btn-primary" style={{ marginTop: 16 }}>
+                Ver tienda
+              </Link>
+            </div>
+          ) : (
+            <div className="client-orders-list">
+              {orders.map((order) => {
+                const { label, icon: Icon, color } = statusMap[order.status] || { label: order.status, icon: Clock, color: "#888" };
+                return (
+                  <div key={order.id} className="client-order-card">
+                    <div className="client-order-header">
+                      <span className="client-order-id">Pedido #{order.id}</span>
+                      <span className="admin-status-pill" style={{ color, borderColor: color }}>
+                        <Icon size={12} /> {label}
+                      </span>
+                      <span className="admin-table-date">
+                        {new Date(order.created_at).toLocaleDateString("es-AR")}
+                      </span>
                     </div>
-                  )}
 
-                  <div className="client-order-footer">
-                    <span>Total</span>
-                    <strong>{formatPrice(order.total)}</strong>
-                  </div>
+                    {order.order_items?.length > 0 && (
+                      <div className="client-order-items">
+                        {order.order_items.map((item) => (
+                          <div key={item.id} className="client-order-item">
+                            <span>{item.product_name}</span>
+                            {item.variant_name && (
+                              <span className="client-order-variant">{item.variant_name}</span>
+                            )}
+                            <span className="client-order-qty">x{item.quantity}</span>
+                            <span>{formatPrice(item.line_total)}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
 
-                  {order.status === "pending" && (
-                    <div className="client-order-actions">
-                      <button
-                        className="btn btn-primary btn-sm"
-                        disabled={actionLoading !== null}
-                        onClick={() => handleRetryPayment(order.id)}
-                      >
-                        <RefreshCw size={14} />
-                        {actionLoading === order.id + "_retry" ? "Redirigiendo…" : "Reintentar pago"}
-                      </button>
-                      <button
-                        className="btn btn-outline btn-sm"
-                        disabled={actionLoading !== null}
-                        onClick={() => handleCancel(order.id)}
-                      >
-                        {actionLoading === order.id + "_cancel" ? "Cancelando…" : "Cancelar pedido"}
-                      </button>
+                    <div className="client-order-footer">
+                      <span>Total</span>
+                      <strong>{formatPrice(order.total)}</strong>
                     </div>
-                  )}
+
+                    {order.status === "pending" && (
+                      <div className="client-order-actions">
+                        <button
+                          className="btn btn-primary btn-sm"
+                          disabled={actionLoading !== null}
+                          onClick={() => handleRetryPayment(order.id)}
+                        >
+                          <RefreshCw size={14} />
+                          {actionLoading === order.id + "_retry" ? "Redirigiendo…" : "Reintentar pago"}
+                        </button>
+                        <button
+                          className="btn btn-outline btn-sm"
+                          disabled={actionLoading !== null}
+                          onClick={() => handleCancel(order.id)}
+                        >
+                          {actionLoading === order.id + "_cancel" ? "Cancelando…" : "Cancelar pedido"}
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )
+        )}
+
+        {/* Profile tab */}
+        {tab === "profile" && (
+          <div className="client-profile-form-wrap">
+            <form onSubmit={handleProfileSave} className="client-profile-form">
+              {profileMsg && (
+                <div className={`client-profile-msg ${profileMsg.type}`}>
+                  <AlertCircle size={15} />
+                  {profileMsg.text}
                 </div>
-              );
-            })}
+              )}
+
+              <div className="admin-form-row">
+                <div className="auth-field">
+                  <label>Nombre completo</label>
+                  <input
+                    value={profileForm.full_name}
+                    onChange={(e) => setProfileForm((f) => ({ ...f, full_name: e.target.value }))}
+                    placeholder="Ej: Juan Pérez"
+                  />
+                </div>
+                <div className="auth-field">
+                  <label>Teléfono</label>
+                  <input
+                    value={profileForm.phone}
+                    onChange={(e) => setProfileForm((f) => ({ ...f, phone: e.target.value }))}
+                    placeholder="Ej: +54 11 1234-5678"
+                  />
+                </div>
+              </div>
+
+              <div className="auth-field">
+                <label>Email</label>
+                <input
+                  type="email"
+                  value={profileForm.email}
+                  onChange={(e) => setProfileForm((f) => ({ ...f, email: e.target.value }))}
+                  placeholder="tu@email.com"
+                />
+                <span style={{ fontSize: "0.78rem", color: "var(--muted)", fontStyle: "italic" }}>
+                  Si cambiás el email, recibirás un link de confirmación en la nueva dirección.
+                </span>
+              </div>
+
+              <div style={{ display: "flex", justifyContent: "flex-end" }}>
+                <button type="submit" className="btn btn-primary" disabled={profileSaving}>
+                  {profileSaving ? <span className="btn-spinner" /> : <><Save size={15} /> Guardar cambios</>}
+                </button>
+              </div>
+            </form>
           </div>
         )}
       </div>
