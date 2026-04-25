@@ -311,7 +311,10 @@ CREATE POLICY "Admin can manage settings"
 
 GRANT ALL ON public.settings TO authenticated;
 
--- Valor inicial: envío gratis a partir de $15.000
+-- Valores iniciales de configuración
 INSERT INTO public.settings (key, value)
   VALUES ('free_shipping_min', '15000')
+  ON CONFLICT DO NOTHING;
+INSERT INTO public.settings (key, value)
+  VALUES ('shipping_cost', '1500')
   ON CONFLICT DO NOTHING;

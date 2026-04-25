@@ -1,32 +1,47 @@
 import { useState, useEffect } from "react";
 import { supabase } from "../../lib/supabase";
-import { Save, Check, Settings } from "lucide-react";
+import { Save, Check, Settings, AlertTriangle } from "lucide-react";
 
 const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:3000";
 
+const fmt = (v) => {
+  const n = parseFloat(v);
+  if (isNaN(n)) return "—";
+  return new Intl.NumberFormat("es-AR", { style: "currency", currency: "ARS", maximumFractionDigits: 0 }).format(n);
+};
+
 export default function AdminSettings() {
   const [freeShippingMin, setFreeShippingMin] = useState("");
+  const [shippingCost, setShippingCost] = useState("");
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState(null);
 
   useEffect(() => {
     fetch(`${API_URL}/api/settings`)
-      .then((r) => r.json())
-      .then((data) => {
-        if (data?.free_shipping_min !== undefined) {
-          setFreeShippingMin(String(data.free_shipping_min));
-        }
+      .then((r) => {
+        if (!r.ok) throw new Error();
+        return r.json();
       })
-      .catch(() => {})
+      .then((data) => {
+        if (data?.free_shipping_min !== undefined) setFreeShippingMin(String(data.free_shipping_min));
+        if (data?.shipping_cost !== undefined) setShippingCost(String(data.shipping_cost));
+      })
+      .catch(() => setLoadError(true))
       .finally(() => setLoading(false));
   }, []);
 
   const handleSave = async (e) => {
     e.preventDefault();
-    const val = parseFloat(freeShippingMin);
-    if (isNaN(val) || val < 0) {
-      setMsg({ type: "error", text: "Ingresá un monto válido." });
+    const minVal = parseFloat(freeShippingMin);
+    const costVal = parseFloat(shippingCost);
+    if (isNaN(minVal) || minVal < 0) {
+      setMsg({ type: "error", text: "Ingresá un monto válido para el envío gratis." });
+      return;
+    }
+    if (isNaN(costVal) || costVal < 0) {
+      setMsg({ type: "error", text: "Ingresá un monto válido para el costo de envío." });
       return;
     }
 
@@ -34,16 +49,26 @@ export default function AdminSettings() {
     setMsg(null);
     try {
       const { data: { session } } = await supabase.auth.getSession();
-      const res = await fetch(`${API_URL}/api/settings`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${session?.access_token}`,
-        },
-        body: JSON.stringify({ key: "free_shipping_min", value: String(val) }),
-      });
-      if (!res.ok) {
-        const d = await res.json();
+      const headers = {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${session?.access_token}`,
+      };
+
+      const [r1, r2] = await Promise.all([
+        fetch(`${API_URL}/api/settings`, {
+          method: "PATCH",
+          headers,
+          body: JSON.stringify({ key: "free_shipping_min", value: String(minVal) }),
+        }),
+        fetch(`${API_URL}/api/settings`, {
+          method: "PATCH",
+          headers,
+          body: JSON.stringify({ key: "shipping_cost", value: String(costVal) }),
+        }),
+      ]);
+
+      if (!r1.ok || !r2.ok) {
+        const d = await (!r1.ok ? r1 : r2).json();
         throw new Error(d.error ?? "Error al guardar");
       }
       setMsg({ type: "ok", text: "Configuración guardada correctamente." });
@@ -52,12 +77,6 @@ export default function AdminSettings() {
     } finally {
       setSaving(false);
     }
-  };
-
-  const formatPreview = (v) => {
-    const n = parseFloat(v);
-    if (isNaN(n)) return "—";
-    return new Intl.NumberFormat("es-AR", { style: "currency", currency: "ARS", maximumFractionDigits: 0 }).format(n);
   };
 
   return (
@@ -73,6 +92,26 @@ export default function AdminSettings() {
         <div className="admin-loading"><div className="auth-loading-spinner" /></div>
       ) : (
         <div style={{ maxWidth: 480 }}>
+          {loadError && (
+            <div
+              style={{
+                marginBottom: 16,
+                padding: "10px 14px",
+                borderRadius: "var(--radius)",
+                fontSize: "0.84rem",
+                background: "rgba(200,16,46,0.08)",
+                border: "1px solid rgba(200,16,46,0.25)",
+                color: "var(--red)",
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+              }}
+            >
+              <AlertTriangle size={14} />
+              No se pudieron cargar los valores actuales. Asegurate de haber ejecutado las migraciones en Supabase.
+            </div>
+          )}
+
           <div
             style={{
               background: "var(--surface)",
@@ -83,7 +122,7 @@ export default function AdminSettings() {
           >
             <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 20 }}>
               <Settings size={18} style={{ color: "var(--red)" }} />
-              <h3 style={{ margin: 0, fontSize: "1rem" }}>Envío gratis</h3>
+              <h3 style={{ margin: 0, fontSize: "1rem" }}>Envío</h3>
             </div>
 
             <form onSubmit={handleSave} className="admin-form">
@@ -119,7 +158,24 @@ export default function AdminSettings() {
                 />
                 {freeShippingMin && (
                   <span style={{ fontSize: "0.78rem", color: "var(--muted)", fontStyle: "italic" }}>
-                    Los pedidos de {formatPreview(freeShippingMin)} o más recibirán envío gratis.
+                    Los pedidos de {fmt(freeShippingMin)} o más recibirán envío gratis.
+                  </span>
+                )}
+              </div>
+
+              <div className="auth-field" style={{ marginTop: 16 }}>
+                <label>Costo de envío (ARS)</label>
+                <input
+                  type="number"
+                  min="0"
+                  step="100"
+                  value={shippingCost}
+                  onChange={(e) => setShippingCost(e.target.value)}
+                  placeholder="Ej: 1500"
+                />
+                {shippingCost && (
+                  <span style={{ fontSize: "0.78rem", color: "var(--muted)", fontStyle: "italic" }}>
+                    Se cobrará {fmt(shippingCost)} cuando el pedido no alcance el mínimo para envío gratis.
                   </span>
                 )}
               </div>

@@ -20,6 +20,7 @@ export default function Cart() {
   const [notes, setNotes] = useState("");
   const [deliveryMethod, setDeliveryMethod] = useState("delivery");
   const [freeShippingMin, setFreeShippingMin] = useState(15000);
+  const [shippingCost, setShippingCost] = useState(1500);
 
   const formatPrice = (p) =>
     new Intl.NumberFormat("es-AR", {
@@ -34,9 +35,8 @@ export default function Cart() {
     fetch(`${API_URL}/api/settings`)
       .then((r) => r.json())
       .then((data) => {
-        if (data?.free_shipping_min) {
-          setFreeShippingMin(Number(data.free_shipping_min));
-        }
+        if (data?.free_shipping_min) setFreeShippingMin(Number(data.free_shipping_min));
+        if (data?.shipping_cost) setShippingCost(Number(data.shipping_cost));
       })
       .catch(() => {});
   }, []);
@@ -44,7 +44,7 @@ export default function Cart() {
   const isPickup = deliveryMethod === "pickup";
   const hasAddress = Boolean(profile?.address?.trim());
 
-  const shipping = isPickup ? 0 : (total >= freeShippingMin ? 0 : 1500);
+  const shipping = isPickup ? 0 : (total >= freeShippingMin ? 0 : shippingCost);
   const finalTotal = total + shipping;
 
   const canCheckout = isPickup || hasAddress;
