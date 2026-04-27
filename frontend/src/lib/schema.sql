@@ -280,3 +280,41 @@ insert into public.promotions (title, bank_name, bank_abbr, bank_color, discount
   ('35% OFF los lunes', 'Banco Nación', 'BNA', '#2d5fa6', 35, 'Débito BNA', 'Lunes'),
   ('15% OFF los sábados', 'ICBC', 'ICBC', '#cc0000', 15, 'Tarjetas ICBC', 'Sábados')
 on conflict do nothing;
+
+-- ================================================
+-- MIGRACIONES — ejecutar en el SQL Editor de Supabase
+-- ================================================
+
+-- 1. Dirección en el perfil del usuario
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS address text;
+
+-- 2. Método de entrega en pedidos
+ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS delivery_method text DEFAULT 'delivery'
+  CHECK (delivery_method IN ('delivery', 'pickup'));
+
+-- 3. Tabla de configuración del sistema
+CREATE TABLE IF NOT EXISTS public.settings (
+  key   text PRIMARY KEY,
+  value text NOT NULL,
+  updated_at timestamptz NOT NULL DEFAULT now()
+);
+
+ALTER TABLE public.settings ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Anyone can read settings"
+  ON settings FOR SELECT USING (true);
+
+CREATE POLICY "Admin can manage settings"
+  ON settings FOR ALL USING (
+    EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'admin')
+  );
+
+GRANT ALL ON public.settings TO authenticated;
+
+-- Valores iniciales de configuración
+INSERT INTO public.settings (key, value)
+  VALUES ('free_shipping_min', '15000')
+  ON CONFLICT DO NOTHING;
+INSERT INTO public.settings (key, value)
+  VALUES ('shipping_cost', '1500')
+  ON CONFLICT DO NOTHING;

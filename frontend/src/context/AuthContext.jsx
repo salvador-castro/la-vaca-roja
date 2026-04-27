@@ -90,7 +90,7 @@ export function AuthProvider({ children }) {
     setProfile(null);
   };
 
-  const updateProfile = async ({ full_name, phone, email }) => {
+  const updateProfile = async ({ full_name, phone, email, address }) => {
     if (email && email !== user?.email) {
       const { error } = await supabase.auth.updateUser({ email });
       if (error) return { error };
@@ -98,6 +98,7 @@ export function AuthProvider({ children }) {
     const updates = {};
     if (full_name !== undefined) updates.full_name = full_name;
     if (phone !== undefined) updates.phone = phone;
+    if (address !== undefined) updates.address = address;
     if (Object.keys(updates).length > 0) {
       const { error } = await supabase.from("profiles").update(updates).eq("id", user.id);
       if (error) return { error };

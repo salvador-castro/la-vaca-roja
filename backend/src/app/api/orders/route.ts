@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 import {
   corsResponse, corsError, handleOptions,
-  createApiClient, getAuthUser, requireAdmin,
+  createApiClient, getAuthUser,
 } from "@/utils/supabase/api";
 
 export async function OPTIONS() { return handleOptions(); }
@@ -12,26 +12,43 @@ export async function GET(req: NextRequest) {
   if (!user) return corsError("No autorizado", 401);
 
   const supabase = createApiClient(req);
-
-  // Verificar rol
   const { data: profile } = await supabase
-    .from("profiles")
-    .select("role")
-    .eq("id", user.id)
-    .single();
+    .from("profiles").select("role").eq("id", user.id).single();
 
-  let query = supabase
-    .from("orders")
-    .select("*, order_items(*), profiles(full_name, email)")
-    .order("created_at", { ascending: false });
+  const isAdmin = profile?.role === "admin";
 
-  if (profile?.role !== "admin") {
-    query = query.eq("user_id", user.id);
+  if (isAdmin) {
+    const { data: orders, error } = await supabase
+      .from("orders")
+      .select("*, order_items(*)")
+      .order("created_at", { ascending: false });
+
+    if (error) return corsError(error.message, 500);
+
+    // Attach profile data manually (no direct FK between orders and profiles)
+    const userIds = [...new Set((orders ?? []).map((o) => o.user_id as string))];
+    const { data: profiles } = await supabase
+      .from("profiles").select("id, full_name, email, phone, address").in("id", userIds);
+
+    const profileMap: Record<string, { id: string; full_name: string; email: string; phone: string | null; address: string | null }> = {};
+    (profiles ?? []).forEach((p) => { profileMap[p.id] = p; });
+
+    const data = (orders ?? []).map((o) => ({ ...o, profiles: profileMap[o.user_id] ?? null }));
+    return corsResponse(data);
   }
 
-  const { data, error } = await query;
+  const { data, error } = await supabase
+    .from("orders")
+    .select("*, order_items(*)")
+    .eq("user_id", user.id)
+    .order("created_at", { ascending: false });
+
   if (error) return corsError(error.message, 500);
-  return corsResponse(data);
+
+  const { data: ownProfile } = await supabase
+    .from("profiles").select("id, full_name, email, phone, address").eq("id", user.id).single();
+
+  return corsResponse((data ?? []).map((o) => ({ ...o, profiles: ownProfile ?? null })));
 }
 
 /**

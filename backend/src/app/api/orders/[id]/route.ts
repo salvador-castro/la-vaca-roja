@@ -16,6 +16,8 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   const { data: profile } = await supabase
     .from("profiles").select("role").eq("id", user.id).single();
 
+  const isAdmin = profile?.role === "admin";
+
   const { data, error } = await supabase
     .from("orders")
     .select("*, order_items(*)")
@@ -24,8 +26,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
 
   if (error || !data) return corsError("Pedido no encontrado", 404);
 
-  // Solo el dueño o un admin puede ver el pedido
-  if (data.user_id !== user.id && profile?.role !== "admin") {
+  if (!isAdmin && data.user_id !== user.id) {
     return corsError("Acceso denegado", 403);
   }
 
@@ -46,20 +47,19 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   const { data: profile } = await supabase
     .from("profiles").select("role").eq("id", user.id).single();
 
+  const isAdmin = profile?.role === "admin";
+
   const { data: order } = await supabase
     .from("orders").select("*").eq("id", id).single();
 
   if (!order) return corsError("Pedido no encontrado", 404);
 
-  const isAdmin = profile?.role === "admin";
   const isOwner = order.user_id === user.id;
-
   if (!isAdmin && !isOwner) return corsError("Acceso denegado", 403);
 
   const body = await req.json();
   const { status } = body;
 
-  // Clientes solo pueden cancelar si está pending
   if (!isAdmin && status !== "cancelled") {
     return corsError("Solo podés cancelar pedidos pendientes", 403);
   }
@@ -67,7 +67,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     return corsError("Solo podés cancelar pedidos pendientes", 400);
   }
 
-  const validStatuses = ["pending", "confirmed", "preparing", "delivered", "cancelled"];
+  const validStatuses = ["pending", "confirmed", "preparing", "shipping", "delivered", "cancelled"];
   if (!validStatuses.includes(status)) {
     return corsError("Estado inválido", 400);
   }
