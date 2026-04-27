@@ -78,6 +78,9 @@ export function AuthProvider({ children }) {
       password,
       options: { data: { full_name: fullName } },
     });
+    if (!error && data.user?.identities?.length === 0) {
+      return { data, error: { message: "User already registered" } };
+    }
     return { data, error };
   };
 
