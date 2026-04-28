@@ -6,7 +6,7 @@ import {
 import { supabase } from "../../lib/supabase";
 
 const emptyCombo = {
-  name: "", category: "Promociones", description: "", price: "", stock: 0,
+  name: "", category: "Promociones", subcategory: "", description: "", price: "", stock: 0,
   image_url: "", badge: "promo", unit: "pack", active: true,
 };
 const emptyDiscount = { productId: "", discountType: "pct", discountValue: "", startsAt: "", endsAt: "" };
@@ -47,6 +47,7 @@ export default function AdminPromotions() {
 
   /* Combos */
   const [promos, setPromos] = useState([]);
+  const [promoCategories, setPromoCategories] = useState([]);
   const [comboModal, setComboModal] = useState(null);
   const [comboForm, setComboForm] = useState(emptyCombo);
   const [deleteComboId, setDeleteComboId] = useState(null);
@@ -92,11 +93,13 @@ export default function AdminPromotions() {
 
   const fetchAll = async () => {
     setLoading(true);
-    const [{ data: combos }, { data: products }] = await Promise.all([
+    const [{ data: combos }, { data: products }, { data: cats }] = await Promise.all([
       supabase.from("products").select("*").eq("category", "Promociones").order("created_at", { ascending: false }),
       supabase.from("products").select("*").neq("category", "Promociones").eq("active", true).order("name"),
+      supabase.from("categories").select("id, name").eq("active", true).order("name"),
     ]);
     setPromos(combos || []);
+    setPromoCategories(cats || []);
     const all = products || [];
     setAllProducts(all);
     setDiscountedProducts(all.filter((p) => p.sale_price != null));
@@ -113,8 +116,9 @@ export default function AdminPromotions() {
   const handleComboSave = async (e) => {
     e.preventDefault();
     if (!comboForm.name || !comboForm.price) return setError("Nombre y precio son obligatorios.");
+    if (!comboForm.subcategory) return setError("La categoría es obligatoria.");
     setSaving(true); setError("");
-    const payload = { ...comboForm, price: parseFloat(comboForm.price), stock: parseInt(comboForm.stock) || 0, badge: comboForm.badge || null, category: "Promociones" };
+    const payload = { ...comboForm, category: "Promociones", price: parseFloat(comboForm.price), stock: parseInt(comboForm.stock) || 0, badge: comboForm.badge || null };
     let err;
     if (comboModal.mode === "create") ({ error: err } = await supabase.from("products").insert(payload));
     else ({ error: err } = await supabase.from("products").update(payload).eq("id", comboModal.id));
@@ -711,6 +715,15 @@ export default function AdminPromotions() {
               <div className="auth-field">
                 <label>Descripción</label>
                 <textarea value={comboForm.description || ""} onChange={setCF("description")} rows={2} placeholder="Descripción del combo o pack..." />
+              </div>
+              <div className="auth-field">
+                <label>Categoría *</label>
+                <select value={comboForm.subcategory} onChange={setCF("subcategory")} required>
+                  <option value="">Seleccioná una categoría...</option>
+                  {promoCategories.map((cat) => (
+                    <option key={cat.id} value={cat.name}>{cat.name}</option>
+                  ))}
+                </select>
               </div>
               <div className="admin-form-row">
                 <div className="auth-field">
