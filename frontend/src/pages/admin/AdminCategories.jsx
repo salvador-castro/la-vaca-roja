@@ -13,13 +13,13 @@ export default function AdminCategories() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [deleteTarget, setDeleteTarget] = useState(null);
-  const [tableError, setTableError] = useState(false);
+  const [tableError, setTableError] = useState(null);
 
   useEffect(() => { fetchAll(); }, []);
 
   const fetchAll = async () => {
     setLoading(true);
-    setTableError(false);
+    setTableError(null);
 
     const [{ data: cats, error: catErr }, { data: products }] = await Promise.all([
       supabase.from("categories").select("*").order("name"),
@@ -27,7 +27,7 @@ export default function AdminCategories() {
     ]);
 
     if (catErr) {
-      setTableError(true);
+      setTableError(catErr.message || catErr.code || "Error desconocido");
       setLoading(false);
       return;
     }
@@ -108,23 +108,47 @@ export default function AdminCategories() {
           borderRadius: "var(--radius)", padding: 24, textAlign: "center",
         }}>
           <AlertCircle size={32} color="var(--red)" style={{ marginBottom: 12 }} />
-          <h4 style={{ marginBottom: 8 }}>Tabla no encontrada</h4>
-          <p style={{ color: "var(--muted)", fontSize: "0.88rem", marginBottom: 16 }}>
-            Creá la tabla <code>categories</code> en Supabase con el siguiente SQL:
+          <h4 style={{ marginBottom: 8 }}>Error al cargar categorías</h4>
+          <p style={{ color: "var(--muted)", fontSize: "0.85rem", marginBottom: 4 }}>
+            {tableError}
+          </p>
+          <p style={{ color: "var(--muted)", fontSize: "0.82rem", marginBottom: 16, fontStyle: "italic" }}>
+            Si la tabla existe pero no carga, probablemente faltan políticas RLS. Ejecutá este SQL en Supabase:
           </p>
           <pre style={{
             background: "var(--bg)", border: "1px solid var(--border)", borderRadius: "var(--radius-sm)",
             padding: 16, textAlign: "left", fontSize: "0.8rem", color: "var(--text)", overflowX: "auto",
-          }}>{`create table categories (
+          }}>{`-- Crear tabla (omitir si ya existe)
+create table if not exists categories (
   id serial primary key,
   name text not null unique,
   active boolean default true,
   created_at timestamptz default now()
 );
 
+-- Seed inicial (omitir si ya tiene datos)
 insert into categories (name) values
   ('Vacuno'), ('Cerdo'), ('Pollo'),
-  ('Hamburguesas'), ('Embutidos');`}</pre>
+  ('Hamburguesas'), ('Embutidos')
+on conflict (name) do nothing;
+
+-- Políticas RLS
+alter table categories enable row level security;
+
+create policy "categories_read_all"
+  on categories for select using (true);
+
+create policy "categories_write_auth"
+  on categories for all
+  to authenticated
+  using (true) with check (true);`}</pre>
+          <button
+            className="btn btn-ghost btn-sm"
+            style={{ marginTop: 16 }}
+            onClick={fetchAll}
+          >
+            Reintentar
+          </button>
         </div>
       ) : (
         <div className="admin-table-wrap">
