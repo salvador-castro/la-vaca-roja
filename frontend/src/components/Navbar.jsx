@@ -61,7 +61,7 @@ export default function Navbar() {
             <img 
               src="https://gfjkhzudkctakwcyqmmj.supabase.co/storage/v1/object/public/logo/logoLaVacaRoja.png" 
               alt="La Vaca Roja" 
-              style={{ height: '70px', width: 'auto', objectFit: 'contain' }} 
+              style={{ height: '120px', width: 'auto', objectFit: 'contain' }}
             />
           </Link>
 
