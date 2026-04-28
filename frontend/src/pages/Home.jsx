@@ -78,6 +78,17 @@ export default function Home() {
   const { promos, loading: promosLoading } = usePromos();
   const featured = products.filter((p) => p.featured).slice(0, 8);
 
+  useEffect(() => {
+    if (promosLoading) return;
+    const els = document.querySelectorAll(".featured-promo-card.reveal:not(.visible)");
+    const obs = new IntersectionObserver(
+      (entries) => entries.forEach((e) => { if (e.isIntersecting) e.target.classList.add("visible"); }),
+      { threshold: 0.1 }
+    );
+    els.forEach((el) => obs.observe(el));
+    return () => obs.disconnect();
+  }, [promos, promosLoading]);
+
   return (
     <main id="home-page">
 
