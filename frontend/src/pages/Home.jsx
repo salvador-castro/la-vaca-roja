@@ -3,8 +3,7 @@ import { Link } from "react-router-dom";
 import { ArrowRight, Flame, Star, Truck, ShieldCheck, Award, Clock } from "lucide-react";
 import { useProducts } from "../hooks/useProducts";
 import ProductCard from "../components/ProductCard";
-
-const API_URL = `${import.meta.env.VITE_API_URL ?? "http://localhost:3000"}/api/products`;
+import { supabase } from "../lib/supabase";
 
 /* ---- Scroll reveal ---- */
 function useReveal() {
@@ -23,10 +22,13 @@ function usePromos() {
   const [promos, setPromos] = useState([]);
   const [loading, setLoading] = useState(true);
   useEffect(() => {
-    fetch(`${API_URL}?category=Promociones`)
-      .then((r) => r.json())
-      .then((data) => { setPromos(Array.isArray(data) ? data : []); setLoading(false); })
-      .catch(() => setLoading(false));
+    supabase
+      .from("products")
+      .select("*")
+      .eq("category", "Promociones")
+      .eq("active", true)
+      .order("created_at", { ascending: false })
+      .then(({ data }) => { setPromos(data || []); setLoading(false); });
   }, []);
   return { promos, loading };
 }
