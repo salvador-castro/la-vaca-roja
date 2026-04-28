@@ -35,14 +35,20 @@ export default function Navbar() {
   };
 
   /* Si estamos en otra ruta, primero navegamos a home y luego hacemos scroll */
+  const scrollToHash = (hash) => {
+    const el = document.getElementById(hash);
+    if (!el) return;
+    const navbarHeight = document.getElementById("main-navbar")?.offsetHeight ?? 80;
+    const top = el.getBoundingClientRect().top + window.scrollY - navbarHeight;
+    window.scrollTo({ top, behavior: "smooth" });
+  };
+
   const handleHashLink = (hash) => {
     if (location.pathname !== "/") {
       navigate("/");
-      setTimeout(() => {
-        document.getElementById(hash)?.scrollIntoView({ behavior: "smooth" });
-      }, 100);
+      setTimeout(() => scrollToHash(hash), 150);
     } else {
-      document.getElementById(hash)?.scrollIntoView({ behavior: "smooth" });
+      scrollToHash(hash);
     }
   };
 
