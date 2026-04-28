@@ -23,7 +23,7 @@ export default function AdminCategories() {
 
     const [{ data: cats, error: catErr }, { data: products }] = await Promise.all([
       supabase.from("categories").select("*").order("name"),
-      supabase.from("products").select("id, category").neq("is_combo", true),
+      supabase.from("products").select("id, category"),
     ]);
 
     if (catErr) {
