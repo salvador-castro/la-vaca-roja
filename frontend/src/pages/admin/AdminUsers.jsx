@@ -4,6 +4,13 @@ import { supabase } from "../../lib/supabase";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
+const API_USERS = `${import.meta.env.VITE_API_URL ?? "http://localhost:3000"}/api/users`;
+
+const getToken = async () => {
+  const { data: { session } } = await supabase.auth.getSession();
+  return session?.access_token ?? null;
+};
+
 export default function AdminUsers() {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -11,6 +18,7 @@ export default function AdminUsers() {
   const [editModal, setEditModal] = useState(null);
   const [editForm, setEditForm] = useState({ full_name: "", phone: "", role: "cliente" });
   const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState(null);
   const [resetMsg, setResetMsg] = useState(null);
 
   useEffect(() => { fetchUsers(); }, []);
@@ -39,14 +47,33 @@ export default function AdminUsers() {
   const handleUserUpdate = async (e) => {
     e.preventDefault();
     setSaving(true);
-    await supabase.from("profiles").update({
-      full_name: editForm.full_name,
-      phone: editForm.phone,
-      role: editForm.role,
-    }).eq("id", editModal.id);
-    setSaving(false);
-    setEditModal(null);
-    fetchUsers();
+    setSaveError(null);
+    try {
+      await supabase.from("profiles").update({
+        full_name: editForm.full_name,
+        phone: editForm.phone,
+      }).eq("id", editModal.id);
+
+      if (editForm.role !== editModal.role) {
+        const token = await getToken();
+        const res = await fetch(API_USERS, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ id: editModal.id, role: editForm.role }),
+        });
+        if (!res.ok) {
+          const data = await res.json();
+          throw new Error(data.error || `Error ${res.status}`);
+        }
+      }
+
+      setEditModal(null);
+      fetchUsers();
+    } catch (err) {
+      setSaveError(err.message);
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleResetPassword = async (email) => {
@@ -225,6 +252,9 @@ export default function AdminUsers() {
                 </select>
               </div>
 
+              {saveError && (
+                <p style={{ color: "var(--error, #e53e3e)", fontSize: 13, padding: "0 4px" }}>{saveError}</p>
+              )}
               <div className="admin-modal-footer">
                 <button type="button" className="btn btn-ghost" onClick={() => setEditModal(null)}>Cancelar</button>
                 <button type="submit" className="btn btn-primary" disabled={saving}>
