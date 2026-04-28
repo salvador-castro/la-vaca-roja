@@ -6,8 +6,8 @@ import {
 import { supabase } from "../../lib/supabase";
 
 const emptyCombo = {
-  name: "", category: "Promociones", subcategory: "", description: "", price: "", stock: 0,
-  image_url: "", badge: "promo", unit: "pack", active: true,
+  name: "", category: "", description: "", price: "", stock: 0,
+  image_url: "", badge: "promo", unit: "pack", active: true, is_combo: true,
 };
 const emptyDiscount = { productId: "", discountType: "pct", discountValue: "", startsAt: "", endsAt: "" };
 
@@ -94,8 +94,8 @@ export default function AdminPromotions() {
   const fetchAll = async () => {
     setLoading(true);
     const [{ data: combos }, { data: products }, { data: cats }] = await Promise.all([
-      supabase.from("products").select("*").eq("category", "Promociones").order("created_at", { ascending: false }),
-      supabase.from("products").select("*").neq("category", "Promociones").eq("active", true).order("name"),
+      supabase.from("products").select("*").eq("is_combo", true).order("created_at", { ascending: false }),
+      supabase.from("products").select("*").neq("is_combo", true).eq("active", true).order("name"),
       supabase.from("categories").select("id, name").eq("active", true).order("name"),
     ]);
     setPromos(combos || []);
@@ -112,13 +112,16 @@ export default function AdminPromotions() {
     setComboForm((prev) => ({ ...prev, [f]: v }));
   };
   const openComboCreate = () => { setComboForm(emptyCombo); setError(""); setComboModal({ mode: "create" }); };
-  const openComboEdit = (p) => { setComboForm(p); setError(""); setComboModal({ mode: "edit", id: p.id }); };
+  const openComboEdit = (p) => {
+    const form = p.category === "Promociones" ? { ...p, category: "" } : p;
+    setComboForm(form); setError(""); setComboModal({ mode: "edit", id: p.id });
+  };
   const handleComboSave = async (e) => {
     e.preventDefault();
     if (!comboForm.name || !comboForm.price) return setError("Nombre y precio son obligatorios.");
-    if (!comboForm.subcategory) return setError("La categoría es obligatoria.");
+    if (!comboForm.category) return setError("La categoría es obligatoria.");
     setSaving(true); setError("");
-    const payload = { ...comboForm, category: "Promociones", price: parseFloat(comboForm.price), stock: parseInt(comboForm.stock) || 0, badge: comboForm.badge || null };
+    const payload = { ...comboForm, is_combo: true, price: parseFloat(comboForm.price), stock: parseInt(comboForm.stock) || 0, badge: comboForm.badge || null };
     let err;
     if (comboModal.mode === "create") ({ error: err } = await supabase.from("products").insert(payload));
     else ({ error: err } = await supabase.from("products").update(payload).eq("id", comboModal.id));
@@ -718,7 +721,7 @@ export default function AdminPromotions() {
               </div>
               <div className="auth-field">
                 <label>Categoría *</label>
-                <select value={comboForm.subcategory} onChange={setCF("subcategory")} required>
+                <select value={comboForm.category} onChange={setCF("category")} required>
                   <option value="">Seleccioná una categoría...</option>
                   {promoCategories.map((cat) => (
                     <option key={cat.id} value={cat.name}>{cat.name}</option>
