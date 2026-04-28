@@ -1,8 +1,10 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { ArrowRight, Flame, Star, Truck, ShieldCheck, Award, Clock } from "lucide-react";
 import { useProducts } from "../hooks/useProducts";
 import ProductCard from "../components/ProductCard";
+
+const API_URL = `${import.meta.env.VITE_API_URL ?? "http://localhost:3000"}/api/products`;
 
 /* ---- Scroll reveal ---- */
 function useReveal() {
@@ -15,6 +17,18 @@ function useReveal() {
     els.forEach((el) => obs.observe(el));
     return () => obs.disconnect();
   }, []);
+}
+
+function usePromos() {
+  const [promos, setPromos] = useState([]);
+  const [loading, setLoading] = useState(true);
+  useEffect(() => {
+    fetch(`${API_URL}?category=Promociones`)
+      .then((r) => r.json())
+      .then((data) => { setPromos(Array.isArray(data) ? data : []); setLoading(false); })
+      .catch(() => setLoading(false));
+  }, []);
+  return { promos, loading };
 }
 
 /* ---- Static data ---- */
@@ -48,11 +62,6 @@ const banks = [
   },
 ];
 
-const promos = [
-  { id: 1, icon: "🥩", title: "Pack Asado Completo", desc: "Tira, vacío, chorizo y morcilla para 4 personas. El combo definitivo para el domingo." },
-  { id: 2, icon: "🍔", title: "Hamburguesas Artesanales", desc: "Pack x8 medallones premium de 180g. Sin conservantes, sin aditivos." },
-  { id: 3, icon: "🏆", title: "Ojo de Bife Black Angus", desc: "Corte de autor con marmoleado excepcional. El rey de la parrilla argentina." },
-];
 
 const features = [
   { icon: Truck,       title: "Delivery mismo día",        desc: "Pedís antes de las 14hs y lo tenés en el día. CABA y GBA." },
@@ -64,6 +73,7 @@ const features = [
 export default function Home() {
   useReveal();
   const { products, loading } = useProducts();
+  const { promos, loading: promosLoading } = usePromos();
   const featured = products.filter((p) => p.featured).slice(0, 8);
 
   return (
@@ -99,7 +109,12 @@ export default function Home() {
             </Link>
             <button
               className="btn btn-ghost btn-lg"
-              onClick={() => document.getElementById("promos")?.scrollIntoView({ behavior: "smooth" })}
+              onClick={() => {
+                const el = document.getElementById("promos");
+                if (!el) return;
+                const navH = document.getElementById("main-navbar")?.offsetHeight ?? 80;
+                window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - navH, behavior: "smooth" });
+              }}
             >
               <Flame size={17} /> Ver Promociones
             </button>
@@ -132,16 +147,24 @@ export default function Home() {
           </div>
 
           <div className="featured-promos-grid" style={{ marginTop: 40 }}>
-            {promos.map((p, i) => (
+            {promosLoading ? (
+              <p style={{ color: "var(--muted)", fontStyle: "italic", gridColumn: "1/-1" }}>Cargando promociones...</p>
+            ) : promos.length === 0 ? (
+              <p style={{ color: "var(--muted)", fontStyle: "italic", gridColumn: "1/-1" }}>Sin promociones activas por el momento.</p>
+            ) : promos.map((p, i) => (
               <article
                 key={p.id}
-                className={`featured-promo-card reveal`}
+                className="featured-promo-card reveal"
                 style={{ transitionDelay: `${i * 0.1}s` }}
               >
-                <div className="featured-promo-icon">{p.icon}</div>
-                <h3 className="featured-promo-title">{p.title}</h3>
-                <p className="featured-promo-desc">{p.desc}</p>
-                <Link to="/shop" className="btn btn-ghost btn-sm" style={{ alignSelf: "flex-start", marginTop: "auto" }}>
+                {p.image_url ? (
+                  <img src={p.image_url} alt={p.name} className="featured-promo-icon" style={{ width: 56, height: 56, objectFit: "cover", borderRadius: "var(--radius)" }} />
+                ) : (
+                  <div className="featured-promo-icon">🥩</div>
+                )}
+                <h3 className="featured-promo-title">{p.name}</h3>
+                {p.description && <p className="featured-promo-desc">{p.description}</p>}
+                <Link to="/shop?category=Promociones" className="btn btn-ghost btn-sm" style={{ alignSelf: "flex-start", marginTop: "auto" }}>
                   Ver en tienda <ArrowRight size={14} />
                 </Link>
               </article>
