@@ -170,16 +170,34 @@ export default function Home() {
                 className="featured-promo-card reveal"
                 style={{ transitionDelay: `${i * 0.1}s` }}
               >
-                {p.image_url ? (
-                  <img src={p.image_url} alt={p.name} className="featured-promo-icon" style={{ width: 56, height: 56, objectFit: "cover", borderRadius: "var(--radius)" }} />
-                ) : (
-                  <div className="featured-promo-icon">🥩</div>
-                )}
-                <h3 className="featured-promo-title">{p.name}</h3>
-                {p.description && <p className="featured-promo-desc">{p.description}</p>}
-                <Link to="/shop?category=Promociones" className="btn btn-ghost btn-sm" style={{ alignSelf: "flex-start", marginTop: "auto" }}>
-                  Ver en tienda <ArrowRight size={14} />
-                </Link>
+                <div className="featured-promo-img-wrap">
+                  {p.image_url
+                    ? <img src={p.image_url} alt={p.name} className="featured-promo-img" />
+                    : <div className="featured-promo-img-placeholder">🥩</div>
+                  }
+                  <div className="featured-promo-img-overlay" />
+                  {p.badge && (
+                    <span className={`featured-promo-badge featured-promo-badge--${p.badge}`}>
+                      {p.badge === "promo" ? "OFERTA" : p.badge === "new" ? "NUEVO" : "PREMIUM"}
+                    </span>
+                  )}
+                </div>
+                <div className="featured-promo-body">
+                  <h3 className="featured-promo-title">{p.name}</h3>
+                  {p.description && <p className="featured-promo-desc">{p.description}</p>}
+                  <div className="featured-promo-footer">
+                    <div className="featured-promo-price">
+                      <span className="featured-promo-price-label">Precio promo</span>
+                      <span className="featured-promo-price-value">
+                        {new Intl.NumberFormat("es-AR", { style: "currency", currency: "ARS", maximumFractionDigits: 0 }).format(p.price)}
+                        <span className="featured-promo-price-unit"> / {p.unit}</span>
+                      </span>
+                    </div>
+                    <Link to="/shop?category=Promociones" className="btn btn-primary btn-sm">
+                      Ver en tienda <ArrowRight size={14} />
+                    </Link>
+                  </div>
+                </div>
               </article>
             ))}
           </div>
