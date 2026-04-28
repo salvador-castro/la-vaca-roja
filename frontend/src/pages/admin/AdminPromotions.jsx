@@ -6,7 +6,7 @@ import {
 import { supabase } from "../../lib/supabase";
 
 const emptyCombo = {
-  name: "", category: "Promociones", price: "", stock: 0,
+  name: "", category: "Promociones", description: "", price: "", stock: 0,
   image_url: "", badge: "promo", unit: "pack", active: true,
 };
 const emptyDiscount = { productId: "", discountType: "pct", discountValue: "", startsAt: "", endsAt: "" };
@@ -597,9 +597,14 @@ export default function AdminPromotions() {
                 <tr key={p.id}>
                   <td>
                     <div className="admin-product-cell">
-                      {p.image_url && <img src={p.image_url} alt={p.name} className="admin-product-img" />}
+                      {p.image_url && <img src={p.image_url} alt={p.name} className="admin-product-thumb" />}
                       <div>
                         <div style={{ fontWeight: 600 }}>{p.name}</div>
+                        {p.description && (
+                          <div style={{ fontSize: "0.78rem", color: "var(--muted)", maxWidth: 320, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                            {p.description}
+                          </div>
+                        )}
                         {p.badge && <span className="admin-table-muted" style={{ fontSize: 12 }}>Badge: {p.badge}</span>}
                       </div>
                     </div>
@@ -702,6 +707,10 @@ export default function AdminPromotions() {
               <div className="auth-field">
                 <label>Nombre *</label>
                 <input value={comboForm.name} onChange={setCF("name")} placeholder="Ej: 2x1 en Chorizos" required />
+              </div>
+              <div className="auth-field">
+                <label>Descripción</label>
+                <textarea value={comboForm.description || ""} onChange={setCF("description")} rows={2} placeholder="Descripción del combo o pack..." />
               </div>
               <div className="admin-form-row">
                 <div className="auth-field">

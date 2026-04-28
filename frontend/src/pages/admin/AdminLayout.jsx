@@ -2,11 +2,12 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard, Package, Tag, Users, Ticket,
-  BarChart2, LogOut, Menu, X, ChevronRight, ShoppingCart, SlidersHorizontal,
+  BarChart2, LogOut, Menu, X, ChevronRight, ShoppingCart, SlidersHorizontal, FolderOpen,
 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import AdminProducts from "./AdminProducts";
 import AdminPromotions from "./AdminPromotions";
+import AdminCategories from "./AdminCategories";
 import AdminUsers from "./AdminUsers";
 import AdminCoupons from "./AdminCoupons";
 import AdminOrders from "./AdminOrders";
@@ -14,18 +15,20 @@ import AdminReports from "./AdminReports";
 import AdminSettings from "./AdminSettings";
 
 const navItems = [
-  { id: "reports",   label: "Resumen",       icon: LayoutDashboard },
-  { id: "products",  label: "Productos",      icon: Package },
-  { id: "promotions",label: "Promociones",    icon: Tag },
-  { id: "users",     label: "Usuarios",       icon: Users },
-  { id: "coupons",   label: "Cupones",        icon: Ticket },
-  { id: "orders",    label: "Pedidos",        icon: ShoppingCart },
-  { id: "settings",  label: "Configuración",  icon: SlidersHorizontal },
+  { id: "reports",    label: "Resumen",       icon: LayoutDashboard },
+  { id: "products",   label: "Productos",      icon: Package },
+  { id: "categories", label: "Categorías",     icon: FolderOpen },
+  { id: "promotions", label: "Promociones",    icon: Tag },
+  { id: "users",      label: "Usuarios",       icon: Users },
+  { id: "coupons",    label: "Cupones",        icon: Ticket },
+  { id: "orders",     label: "Pedidos",        icon: ShoppingCart },
+  { id: "settings",   label: "Configuración",  icon: SlidersHorizontal },
 ];
 
 const views = {
   reports:    AdminReports,
   products:   AdminProducts,
+  categories: AdminCategories,
   promotions: AdminPromotions,
   users:      AdminUsers,
   coupons:    AdminCoupons,
