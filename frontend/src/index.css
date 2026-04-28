@@ -493,16 +493,16 @@ body::after {
   background-image: url("/images/bife.png");
   background-size: cover;
   background-position: center 40%;
-  opacity: 0.15;
-  filter: saturate(0.8) brightness(0.6);
+  opacity: 0.55;
+  filter: saturate(1.1) brightness(0.75);
 }
 
 .hero-bg-overlay {
   position: absolute;
   inset: 0;
   background:
-    linear-gradient(105deg, rgba(10,8,6,0.98) 35%, rgba(10,8,6,0.5) 70%, rgba(10,8,6,0.8) 100%),
-    linear-gradient(to bottom, transparent 50%, rgba(10,8,6,1) 100%);
+    linear-gradient(105deg, rgba(10,8,6,0.97) 30%, rgba(10,8,6,0.35) 60%, rgba(10,8,6,0.15) 100%),
+    linear-gradient(to bottom, transparent 60%, rgba(10,8,6,0.9) 100%);
 }
 
 /* Red stripe accent */
