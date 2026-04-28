@@ -39,7 +39,7 @@
   --transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   --transition-bounce: 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
 
-  --nav-h: 68px;
+  --nav-h: 130px;
 }
 
 /* --- Reset --- */
