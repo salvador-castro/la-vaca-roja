@@ -1,5 +1,16 @@
 import { useState, useEffect } from "react";
-import { Users, Shield, User, Search, Pencil, X, Check, Download, KeyRound, Mail } from "lucide-react";
+import {
+  Users,
+  Shield,
+  User,
+  Search,
+  Pencil,
+  X,
+  Check,
+  Download,
+  KeyRound,
+  Mail,
+} from "lucide-react";
 import { supabase } from "../../lib/supabase";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
@@ -9,11 +20,17 @@ export default function AdminUsers() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [editModal, setEditModal] = useState(null);
-  const [editForm, setEditForm] = useState({ full_name: "", phone: "", role: "cliente" });
+  const [editForm, setEditForm] = useState({
+    full_name: "",
+    phone: "",
+    role: "cliente",
+  });
   const [saving, setSaving] = useState(false);
   const [resetMsg, setResetMsg] = useState(null);
 
-  useEffect(() => { fetchUsers(); }, []);
+  useEffect(() => {
+    fetchUsers();
+  }, []);
 
   const fetchUsers = async () => {
     setLoading(true);
@@ -28,22 +45,29 @@ export default function AdminUsers() {
   const filtered = users.filter(
     (u) =>
       u.full_name?.toLowerCase().includes(search.toLowerCase()) ||
-      u.email?.toLowerCase().includes(search.toLowerCase())
+      u.email?.toLowerCase().includes(search.toLowerCase()),
   );
 
   const openEdit = (u) => {
     setEditModal(u);
-    setEditForm({ full_name: u.full_name || "", phone: u.phone || "", role: u.role || "cliente" });
+    setEditForm({
+      full_name: u.full_name || "",
+      phone: u.phone || "",
+      role: u.role || "cliente",
+    });
   };
 
   const handleUserUpdate = async (e) => {
     e.preventDefault();
     setSaving(true);
-    await supabase.from("profiles").update({
-      full_name: editForm.full_name,
-      phone: editForm.phone,
-      role: editForm.role,
-    }).eq("id", editModal.id);
+    await supabase
+      .from("profiles")
+      .update({
+        full_name: editForm.full_name,
+        phone: editForm.phone,
+        role: editForm.role,
+      })
+      .eq("id", editModal.id);
     setSaving(false);
     setEditModal(null);
     fetchUsers();
@@ -101,7 +125,10 @@ export default function AdminUsers() {
       </div>
 
       {resetMsg && (
-        <div className={`client-profile-msg ${resetMsg.type}`} style={{ maxWidth: 480 }}>
+        <div
+          className={`client-profile-msg ${resetMsg.type}`}
+          style={{ maxWidth: 480 }}
+        >
           <Mail size={15} />
           {resetMsg.text}
         </div>
@@ -118,7 +145,9 @@ export default function AdminUsers() {
       </div>
 
       {loading ? (
-        <div className="admin-loading"><div className="auth-loading-spinner" /></div>
+        <div className="admin-loading">
+          <div className="auth-loading-spinner" />
+        </div>
       ) : (
         <div className="admin-table-wrap">
           <table className="admin-table">
@@ -134,23 +163,41 @@ export default function AdminUsers() {
             </thead>
             <tbody>
               {filtered.length === 0 ? (
-                <tr><td colSpan={6} className="admin-table-empty">No se encontraron usuarios</td></tr>
+                <tr>
+                  <td colSpan={6} className="admin-table-empty">
+                    No se encontraron usuarios
+                  </td>
+                </tr>
               ) : (
                 filtered.map((u) => (
                   <tr key={u.id}>
                     <td>
-                      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 10,
+                        }}
+                      >
                         <div className="admin-user-avatar">
-                          {u.full_name?.[0]?.toUpperCase() || u.email?.[0]?.toUpperCase() || "?"}
+                          {u.full_name?.[0]?.toUpperCase() ||
+                            u.email?.[0]?.toUpperCase() ||
+                            "?"}
                         </div>
                         <span>{u.full_name || "—"}</span>
                       </div>
                     </td>
                     <td className="admin-table-muted">{u.email}</td>
-                    <td className="admin-table-muted">{u.phone || <span style={{ opacity: 0.4 }}>—</span>}</td>
+                    <td className="admin-table-muted">
+                      {u.phone || <span style={{ opacity: 0.4 }}>—</span>}
+                    </td>
                     <td>
                       <span className={`admin-role-tag ${u.role}`}>
-                        {u.role === "admin" ? <Shield size={12} /> : <User size={12} />}
+                        {u.role === "admin" ? (
+                          <Shield size={12} />
+                        ) : (
+                          <User size={12} />
+                        )}
                         {u.role}
                       </span>
                     </td>
@@ -188,10 +235,18 @@ export default function AdminUsers() {
           <div className="admin-modal" onClick={(e) => e.stopPropagation()}>
             <div className="admin-modal-header">
               <h3>Editar Usuario</h3>
-              <button className="admin-modal-close" onClick={() => setEditModal(null)}><X size={20} /></button>
+              <button
+                className="admin-modal-close"
+                onClick={() => setEditModal(null)}
+              >
+                <X size={20} />
+              </button>
             </div>
 
-            <p className="admin-table-muted" style={{ padding: "0 24px 4px", marginTop: 16 }}>
+            <p
+              className="admin-table-muted"
+              style={{ padding: "0 24px 4px", marginTop: 16 }}
+            >
               Editando a: <strong>{editModal.email}</strong>
             </p>
 
@@ -200,7 +255,9 @@ export default function AdminUsers() {
                 <label>Nombre Completo</label>
                 <input
                   value={editForm.full_name}
-                  onChange={(e) => setEditForm((f) => ({ ...f, full_name: e.target.value }))}
+                  onChange={(e) =>
+                    setEditForm((f) => ({ ...f, full_name: e.target.value }))
+                  }
                   placeholder="Ej: Juan Pérez"
                 />
               </div>
@@ -209,7 +266,9 @@ export default function AdminUsers() {
                 <label>Teléfono</label>
                 <input
                   value={editForm.phone}
-                  onChange={(e) => setEditForm((f) => ({ ...f, phone: e.target.value }))}
+                  onChange={(e) =>
+                    setEditForm((f) => ({ ...f, phone: e.target.value }))
+                  }
                   placeholder="Ej: +54 11 1234-5678"
                 />
               </div>
@@ -218,7 +277,9 @@ export default function AdminUsers() {
                 <label>Rol</label>
                 <select
                   value={editForm.role}
-                  onChange={(e) => setEditForm((f) => ({ ...f, role: e.target.value }))}
+                  onChange={(e) =>
+                    setEditForm((f) => ({ ...f, role: e.target.value }))
+                  }
                 >
                   <option value="cliente">Cliente</option>
                   <option value="admin">Administrador</option>
@@ -226,9 +287,25 @@ export default function AdminUsers() {
               </div>
 
               <div className="admin-modal-footer">
-                <button type="button" className="btn btn-ghost" onClick={() => setEditModal(null)}>Cancelar</button>
-                <button type="submit" className="btn btn-primary" disabled={saving}>
-                  {saving ? <span className="btn-spinner" /> : <><Check size={16} /> Guardar</>}
+                <button
+                  type="button"
+                  className="btn btn-ghost"
+                  onClick={() => setEditModal(null)}
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  className="btn btn-primary"
+                  disabled={saving}
+                >
+                  {saving ? (
+                    <span className="btn-spinner" />
+                  ) : (
+                    <>
+                      <Check size={16} /> Guardar
+                    </>
+                  )}
                 </button>
               </div>
             </form>

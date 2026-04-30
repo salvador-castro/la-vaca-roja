@@ -34,12 +34,16 @@ export default function Login() {
         <div className="auth-brand">
           <Link to="/" className="auth-logo">
             <span className="auth-logo-icon">🥩</span>
-            <span>La Vaca <strong>Roja</strong></span>
+            <span>
+              La Vaca <strong>Roja</strong>
+            </span>
           </Link>
         </div>
 
         <h1 className="auth-title">Bienvenido de vuelta</h1>
-        <p className="auth-subtitle">Ingresá para ver tus pedidos y descuentos exclusivos.</p>
+        <p className="auth-subtitle">
+          Ingresá para ver tus pedidos y descuentos exclusivos.
+        </p>
 
         {error && (
           <div className="auth-error">
@@ -85,7 +89,11 @@ export default function Login() {
             </div>
           </div>
 
-          <button type="submit" className="btn btn-primary auth-submit" disabled={loading}>
+          <button
+            type="submit"
+            className="btn btn-primary auth-submit"
+            disabled={loading}
+          >
             {loading ? (
               <span className="btn-spinner" />
             ) : (
@@ -98,8 +106,7 @@ export default function Login() {
         </form>
 
         <p className="auth-switch">
-          ¿No tenés cuenta?{" "}
-          <Link to="/register">Registrate gratis</Link>
+          ¿No tenés cuenta? <Link to="/register">Registrate gratis</Link>
         </p>
       </div>
     </main>

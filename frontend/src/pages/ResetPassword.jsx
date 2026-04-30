@@ -15,7 +15,9 @@ export default function ResetPassword() {
 
   useEffect(() => {
     // Supabase fires PASSWORD_RECOVERY when the user arrives via the reset link
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event) => {
       if (event === "PASSWORD_RECOVERY") {
         setReady(true);
       }
@@ -56,18 +58,43 @@ export default function ResetPassword() {
         </div>
 
         {done ? (
-          <div style={{ textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", gap: 14 }}>
+          <div
+            style={{
+              textAlign: "center",
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              gap: 14,
+            }}
+          >
             <CheckCircle size={44} color="#81c784" />
             <h2 className="auth-title">¡Contraseña actualizada!</h2>
-            <p className="auth-subtitle">Serás redirigido al inicio de sesión en unos segundos.</p>
-            <Link to="/login" className="btn btn-primary" style={{ marginTop: 8 }}>Ir al login</Link>
+            <p className="auth-subtitle">
+              Serás redirigido al inicio de sesión en unos segundos.
+            </p>
+            <Link
+              to="/login"
+              className="btn btn-primary"
+              style={{ marginTop: 8 }}
+            >
+              Ir al login
+            </Link>
           </div>
         ) : !ready ? (
-          <div style={{ textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", gap: 14 }}>
+          <div
+            style={{
+              textAlign: "center",
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              gap: 14,
+            }}
+          >
             <KeyRound size={36} style={{ color: "var(--muted)" }} />
             <h2 className="auth-title">Resetear contraseña</h2>
             <p className="auth-subtitle">
-              Esperando el link de confirmación…<br />
+              Esperando el link de confirmación…
+              <br />
               Si llegaste desde el email, la página se activará automáticamente.
             </p>
             <div className="auth-loading-spinner" style={{ marginTop: 8 }} />
@@ -75,7 +102,9 @@ export default function ResetPassword() {
         ) : (
           <>
             <h2 className="auth-title">Nueva contraseña</h2>
-            <p className="auth-subtitle">Elegí una contraseña segura para tu cuenta.</p>
+            <p className="auth-subtitle">
+              Elegí una contraseña segura para tu cuenta.
+            </p>
 
             <form onSubmit={handleSubmit} className="auth-form">
               {error && <div className="auth-error">{error}</div>}
@@ -90,7 +119,11 @@ export default function ResetPassword() {
                     placeholder="Mínimo 6 caracteres"
                     required
                   />
-                  <button type="button" className="auth-eye-btn" onClick={() => setShowPass((v) => !v)}>
+                  <button
+                    type="button"
+                    className="auth-eye-btn"
+                    onClick={() => setShowPass((v) => !v)}
+                  >
                     {showPass ? <EyeOff size={18} /> : <Eye size={18} />}
                   </button>
                 </div>
@@ -109,8 +142,16 @@ export default function ResetPassword() {
                 </div>
               </div>
 
-              <button type="submit" className="btn btn-primary auth-submit" disabled={loading}>
-                {loading ? <span className="btn-spinner" /> : "Guardar nueva contraseña"}
+              <button
+                type="submit"
+                className="btn btn-primary auth-submit"
+                disabled={loading}
+              >
+                {loading ? (
+                  <span className="btn-spinner" />
+                ) : (
+                  "Guardar nueva contraseña"
+                )}
               </button>
             </form>
           </>
