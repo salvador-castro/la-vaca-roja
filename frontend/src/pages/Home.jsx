@@ -212,6 +212,9 @@ export default function Home() {
             <h2 className="section-title">
               Pagá menos con<br /><span>tu banco</span>
             </h2>
+            <p className="section-subtitle" style={{ marginTop: 12, opacity: 0.8 }}>
+              Promoción válida solo en el local.
+            </p>
           </div>
 
           <div className="bank-promos-grid reveal" style={{ marginTop: 40, textAlign: 'center' }}>

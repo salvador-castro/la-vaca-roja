@@ -5,7 +5,14 @@ export default function PaymentPending() {
   const orderId = params.get("external_reference");
 
   return (
-    <main style={{ minHeight: "70vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
+    <main
+      style={{
+        minHeight: "70vh",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+      }}
+    >
       <div
         style={{
           textAlign: "center",
@@ -17,15 +24,28 @@ export default function PaymentPending() {
         }}
       >
         <div style={{ fontSize: "4rem", marginBottom: 16 }}>⏳</div>
-        <h1 style={{ fontFamily: "var(--font-display)", fontSize: "2rem", marginBottom: 12 }}>
+        <h1
+          style={{
+            fontFamily: "var(--font-display)",
+            fontSize: "2rem",
+            marginBottom: 12,
+          }}
+        >
           Pago en proceso
         </h1>
         <p style={{ color: "var(--muted)", marginBottom: 8 }}>
           Tu pago está siendo procesado. Te notificaremos cuando se confirme.
         </p>
         {orderId && (
-          <p style={{ fontSize: "0.82rem", color: "var(--muted)", marginBottom: 24 }}>
-            N.° de pedido: <strong style={{ color: "var(--text)" }}>#{orderId}</strong>
+          <p
+            style={{
+              fontSize: "0.82rem",
+              color: "var(--muted)",
+              marginBottom: 24,
+            }}
+          >
+            N.° de pedido:{" "}
+            <strong style={{ color: "var(--text)" }}>#{orderId}</strong>
           </p>
         )}
         <Link to="/dashboard" className="btn btn-primary">

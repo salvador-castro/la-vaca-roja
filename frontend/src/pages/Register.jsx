@@ -1,10 +1,15 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Eye, EyeOff, UserPlus, AlertCircle, Mail } from "lucide-react";
+import { Eye, EyeOff, UserPlus, AlertCircle, CheckCircle } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 
 export default function Register() {
-  const [form, setForm] = useState({ fullName: "", email: "", password: "", confirm: "" });
+  const [form, setForm] = useState({
+    fullName: "",
+    email: "",
+    password: "",
+    confirm: "",
+  });
   const [showPass, setShowPass] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
@@ -12,7 +17,8 @@ export default function Register() {
   const { signUp } = useAuth();
   const navigate = useNavigate();
 
-  const set = (field) => (e) => setForm((f) => ({ ...f, [field]: e.target.value }));
+  const set = (field) => (e) =>
+    setForm((f) => ({ ...f, [field]: e.target.value }));
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -26,53 +32,62 @@ export default function Register() {
     }
 
     setLoading(true);
-    const { error: err } = await signUp(form.email, form.password, form.fullName);
+    const { error: err } = await signUp(
+      form.email,
+      form.password,
+      form.fullName,
+    );
     setLoading(false);
 
     if (err) {
-      setError(err.message === "User already registered"
-        ? "Ya existe una cuenta con ese email."
-        : "Error al registrarse. Intentá de nuevo."
+      setError(
+        err.message === "User already registered"
+          ? "Ya existe una cuenta con ese email."
+          : "Error al registrarse. Intentá de nuevo.",
       );
     } else {
       setSuccess(true);
+      setTimeout(() => navigate("/login"), 3000);
     }
   };
 
+  if (success) {
+    return (
+      <main className="auth-page">
+        <div className="auth-card auth-success-card">
+          <CheckCircle size={56} color="var(--red)" />
+          <h2 className="auth-title">¡Cuenta creada!</h2>
+          <p className="auth-subtitle">
+            Revisá tu email para confirmar tu cuenta y luego podés ingresar.
+          </p>
+          <Link
+            to="/login"
+            className="btn btn-primary"
+            style={{ marginTop: 16 }}
+          >
+            Ir al ingreso
+          </Link>
+        </div>
+      </main>
+    );
+  }
+
   return (
     <main className="auth-page">
-      {success && (
-        <div style={{
-          position: "fixed", inset: 0, background: "rgba(0,0,0,0.55)",
-          display: "flex", alignItems: "center", justifyContent: "center",
-          zIndex: 1000, padding: "1rem",
-        }}>
-          <div style={{
-            background: "var(--surface)", borderRadius: "var(--radius-lg)",
-            padding: "2.5rem 2rem", maxWidth: 420, width: "100%", textAlign: "center",
-            boxShadow: "0 8px 40px rgba(0,0,0,0.25)",
-          }}>
-            <Mail size={52} color="var(--red)" style={{ display: "block", margin: "0 auto 1rem" }} />
-            <h3 style={{ marginBottom: "0.5rem", fontSize: "1.25rem" }}>¡Cuenta creada!</h3>
-            <p style={{ color: "var(--muted)", marginBottom: "1.75rem", lineHeight: 1.6, fontSize: "0.95rem" }}>
-              Se necesita confirmar tu email para poder iniciar sesión. Revisá tu bandeja de entrada y hacé clic en el enlace de confirmación.
-            </p>
-            <Link to="/login" className="btn btn-primary" style={{ display: "inline-flex" }}>
-              Ir al ingreso
-            </Link>
-          </div>
-        </div>
-      )}
       <div className="auth-card">
         <div className="auth-brand">
           <Link to="/" className="auth-logo">
             <span className="auth-logo-icon">🥩</span>
-            <span>La Vaca <strong>Roja</strong></span>
+            <span>
+              La Vaca <strong>Roja</strong>
+            </span>
           </Link>
         </div>
 
         <h1 className="auth-title">Crear cuenta</h1>
-        <p className="auth-subtitle">Registrate y accedé a precios exclusivos y seguimiento de pedidos.</p>
+        <p className="auth-subtitle">
+          Registrate y accedé a precios exclusivos y seguimiento de pedidos.
+        </p>
 
         {error && (
           <div className="auth-error">
@@ -144,7 +159,11 @@ export default function Register() {
             />
           </div>
 
-          <button type="submit" className="btn btn-primary auth-submit" disabled={loading}>
+          <button
+            type="submit"
+            className="btn btn-primary auth-submit"
+            disabled={loading}
+          >
             {loading ? (
               <span className="btn-spinner" />
             ) : (
@@ -157,8 +176,7 @@ export default function Register() {
         </form>
 
         <p className="auth-switch">
-          ¿Ya tenés cuenta?{" "}
-          <Link to="/login">Ingresá acá</Link>
+          ¿Ya tenés cuenta? <Link to="/login">Ingresá acá</Link>
         </p>
       </div>
     </main>
