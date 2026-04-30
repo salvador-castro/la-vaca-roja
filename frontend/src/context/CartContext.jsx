@@ -39,7 +39,7 @@ export function CartProvider({ children }) {
     return () => subscription.unsubscribe();
   }, []);
 
-  const addItem = useCallback((product, variant = null, qty = 1) => {
+  const addItem = useCallback((product, variant = null, qty = 1, { openDrawer = true } = {}) => {
     const cartKey = makeKey(product.id, variant?.name);
     const now = new Date();
     const promoActive =
@@ -59,7 +59,7 @@ export function CartProvider({ children }) {
       }
       return [...prev, { ...product, cartKey, variant, price, qty }];
     });
-    setDrawerOpen(true);
+    if (openDrawer) setDrawerOpen(true);
   }, []);
 
   const removeItem = useCallback((cartKey) => {

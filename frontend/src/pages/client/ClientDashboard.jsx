@@ -1,8 +1,17 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import {
-  ShoppingBag, Package, Clock, CheckCircle, XCircle,
-  Truck, BadgeCheck, RefreshCw, User, Save, AlertCircle,
+  ShoppingBag,
+  Package,
+  Clock,
+  CheckCircle,
+  XCircle,
+  Truck,
+  BadgeCheck,
+  RefreshCw,
+  User,
+  Save,
+  AlertCircle,
 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import { supabase } from "../../lib/supabase";
@@ -10,15 +19,19 @@ import { supabase } from "../../lib/supabase";
 const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:3000";
 
 const formatPrice = (p) =>
-  new Intl.NumberFormat("es-AR", { style: "currency", currency: "ARS", maximumFractionDigits: 0 }).format(p ?? 0);
+  new Intl.NumberFormat("es-AR", {
+    style: "currency",
+    currency: "ARS",
+    maximumFractionDigits: 0,
+  }).format(p ?? 0);
 
 const statusMap = {
-  pending:   { label: "Pendiente",  icon: Clock,       color: "#f5a623" },
+  pending: { label: "Pendiente", icon: Clock, color: "#f5a623" },
   confirmed: { label: "Confirmado", icon: CheckCircle, color: "#4caf50" },
-  preparing: { label: "Preparando", icon: Package,     color: "#2196f3" },
-  shipping:  { label: "Enviando",   icon: Truck,       color: "#9c27b0" },
-  delivered: { label: "Entregado",  icon: BadgeCheck,  color: "#8bc34a" },
-  cancelled: { label: "Cancelado",  icon: XCircle,     color: "#f44336" },
+  preparing: { label: "Preparando", icon: Package, color: "#2196f3" },
+  shipping: { label: "Enviando", icon: Truck, color: "#9c27b0" },
+  delivered: { label: "Entregado", icon: BadgeCheck, color: "#8bc34a" },
+  cancelled: { label: "Cancelado", icon: XCircle, color: "#f44336" },
 };
 
 export default function ClientDashboard() {
@@ -29,7 +42,11 @@ export default function ClientDashboard() {
   const [actionLoading, setActionLoading] = useState(null);
 
   // Profile form state
-  const [profileForm, setProfileForm] = useState({ full_name: "", phone: "", email: "" });
+  const [profileForm, setProfileForm] = useState({
+    full_name: "",
+    phone: "",
+    email: "",
+  });
   const [profileSaving, setProfileSaving] = useState(false);
   const [profileMsg, setProfileMsg] = useState(null);
 
@@ -43,7 +60,9 @@ export default function ClientDashboard() {
     }
   }, [profile, user]);
 
-  useEffect(() => { fetchOrders(); }, [user]);
+  useEffect(() => {
+    fetchOrders();
+  }, [user]);
 
   const fetchOrders = async () => {
     if (!user) return;
@@ -68,7 +87,10 @@ export default function ClientDashboard() {
     });
     setProfileSaving(false);
     if (error) {
-      setProfileMsg({ type: "error", text: error.message || "Error al guardar los datos." });
+      setProfileMsg({
+        type: "error",
+        text: error.message || "Error al guardar los datos.",
+      });
     } else {
       const emailChanged = profileForm.email !== user?.email;
       setProfileMsg({
@@ -83,7 +105,9 @@ export default function ClientDashboard() {
   const handleRetryPayment = async (orderId) => {
     setActionLoading(orderId + "_retry");
     try {
-      const { data: { session } } = await supabase.auth.getSession();
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
       if (!session) return;
       const res = await fetch(`${API_URL}/api/payment/retry`, {
         method: "POST",
@@ -95,8 +119,11 @@ export default function ClientDashboard() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Error al reintentar el pago");
-      const useSandbox = import.meta.env.DEV || import.meta.env.VITE_MP_SANDBOX === "true";
-      window.location.href = useSandbox ? data.sandbox_init_point : data.init_point;
+      const useSandbox =
+        import.meta.env.DEV || import.meta.env.VITE_MP_SANDBOX === "true";
+      window.location.href = useSandbox
+        ? data.sandbox_init_point
+        : data.init_point;
     } catch (err) {
       alert(err.message);
       setActionLoading(null);
@@ -107,7 +134,9 @@ export default function ClientDashboard() {
     if (!confirm("¿Cancelar este pedido?")) return;
     setActionLoading(orderId + "_cancel");
     try {
-      const { data: { session } } = await supabase.auth.getSession();
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
       if (!session) return;
       const res = await fetch(`${API_URL}/api/orders/${orderId}`, {
         method: "PATCH",
@@ -120,7 +149,7 @@ export default function ClientDashboard() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Error al cancelar el pedido");
       setOrders((prev) =>
-        prev.map((o) => (o.id === orderId ? { ...o, status: "cancelled" } : o))
+        prev.map((o) => (o.id === orderId ? { ...o, status: "cancelled" } : o)),
       );
     } catch (err) {
       alert(err.message);
@@ -131,15 +160,21 @@ export default function ClientDashboard() {
 
   return (
     <main className="client-dashboard">
-      <div className="container" style={{ paddingTop: "calc(var(--nav-h) + 40px)", paddingBottom: 80 }}>
+      <div
+        className="container"
+        style={{ paddingTop: "calc(var(--nav-h) + 40px)", paddingBottom: 80 }}
+      >
         {/* Header */}
         <div className="client-dash-header">
           <div className="client-avatar">
-            {profile?.full_name?.[0]?.toUpperCase() || user?.email?.[0]?.toUpperCase() || "U"}
+            {profile?.full_name?.[0]?.toUpperCase() ||
+              user?.email?.[0]?.toUpperCase() ||
+              "U"}
           </div>
           <div>
             <h1 className="client-dash-greeting">
-              Hola, <span>{profile?.full_name?.split(" ")[0] || "cliente"}</span>
+              Hola,{" "}
+              <span>{profile?.full_name?.split(" ")[0] || "cliente"}</span>
             </h1>
             <p className="client-dash-email">{user?.email}</p>
           </div>
@@ -156,7 +191,9 @@ export default function ClientDashboard() {
             <span>Pedidos totales</span>
           </div>
           <div className="client-action-card client-action-stat">
-            <strong>{orders.filter((o) => o.status === "pending").length}</strong>
+            <strong>
+              {orders.filter((o) => o.status === "pending").length}
+            </strong>
             <span>Pendientes</span>
           </div>
         </div>
@@ -178,27 +215,48 @@ export default function ClientDashboard() {
         </div>
 
         {/* Orders tab */}
-        {tab === "orders" && (
-          ordersLoading ? (
-            <div className="admin-loading"><div className="auth-loading-spinner" /></div>
+        {tab === "orders" &&
+          (ordersLoading ? (
+            <div className="admin-loading">
+              <div className="auth-loading-spinner" />
+            </div>
           ) : orders.length === 0 ? (
             <div className="client-empty-orders">
               <ShoppingBag size={48} opacity={0.3} />
               <h3>Todavía no hiciste pedidos</h3>
-              <p>Explorá nuestra tienda y encontrá los mejores cortes de carne.</p>
-              <Link to="/shop" className="btn btn-primary" style={{ marginTop: 16 }}>
+              <p>
+                Explorá nuestra tienda y encontrá los mejores cortes de carne.
+              </p>
+              <Link
+                to="/shop"
+                className="btn btn-primary"
+                style={{ marginTop: 16 }}
+              >
                 Ver tienda
               </Link>
             </div>
           ) : (
             <div className="client-orders-list">
               {orders.map((order) => {
-                const { label, icon: Icon, color } = statusMap[order.status] || { label: order.status, icon: Clock, color: "#888" };
+                const {
+                  label,
+                  icon: Icon,
+                  color,
+                } = statusMap[order.status] || {
+                  label: order.status,
+                  icon: Clock,
+                  color: "#888",
+                };
                 return (
                   <div key={order.id} className="client-order-card">
                     <div className="client-order-header">
-                      <span className="client-order-id">Pedido #{order.id}</span>
-                      <span className="admin-status-pill" style={{ color, borderColor: color }}>
+                      <span className="client-order-id">
+                        Pedido #{order.id}
+                      </span>
+                      <span
+                        className="admin-status-pill"
+                        style={{ color, borderColor: color }}
+                      >
                         <Icon size={12} /> {label}
                       </span>
                       <span className="admin-table-date">
@@ -212,9 +270,13 @@ export default function ClientDashboard() {
                           <div key={item.id} className="client-order-item">
                             <span>{item.product_name}</span>
                             {item.variant_name && (
-                              <span className="client-order-variant">{item.variant_name}</span>
+                              <span className="client-order-variant">
+                                {item.variant_name}
+                              </span>
                             )}
-                            <span className="client-order-qty">x{item.quantity}</span>
+                            <span className="client-order-qty">
+                              x{item.quantity}
+                            </span>
                             <span>{formatPrice(item.line_total)}</span>
                           </div>
                         ))}
@@ -234,14 +296,18 @@ export default function ClientDashboard() {
                           onClick={() => handleRetryPayment(order.id)}
                         >
                           <RefreshCw size={14} />
-                          {actionLoading === order.id + "_retry" ? "Redirigiendo…" : "Reintentar pago"}
+                          {actionLoading === order.id + "_retry"
+                            ? "Redirigiendo…"
+                            : "Reintentar pago"}
                         </button>
                         <button
                           className="btn btn-outline btn-sm"
                           disabled={actionLoading !== null}
                           onClick={() => handleCancel(order.id)}
                         >
-                          {actionLoading === order.id + "_cancel" ? "Cancelando…" : "Cancelar pedido"}
+                          {actionLoading === order.id + "_cancel"
+                            ? "Cancelando…"
+                            : "Cancelar pedido"}
                         </button>
                       </div>
                     )}
@@ -249,8 +315,7 @@ export default function ClientDashboard() {
                 );
               })}
             </div>
-          )
-        )}
+          ))}
 
         {/* Profile tab */}
         {tab === "profile" && (
@@ -268,7 +333,12 @@ export default function ClientDashboard() {
                   <label>Nombre completo</label>
                   <input
                     value={profileForm.full_name}
-                    onChange={(e) => setProfileForm((f) => ({ ...f, full_name: e.target.value }))}
+                    onChange={(e) =>
+                      setProfileForm((f) => ({
+                        ...f,
+                        full_name: e.target.value,
+                      }))
+                    }
                     placeholder="Ej: Juan Pérez"
                   />
                 </div>
@@ -276,7 +346,9 @@ export default function ClientDashboard() {
                   <label>Teléfono</label>
                   <input
                     value={profileForm.phone}
-                    onChange={(e) => setProfileForm((f) => ({ ...f, phone: e.target.value }))}
+                    onChange={(e) =>
+                      setProfileForm((f) => ({ ...f, phone: e.target.value }))
+                    }
                     placeholder="Ej: +54 11 1234-5678"
                   />
                 </div>
@@ -287,17 +359,36 @@ export default function ClientDashboard() {
                 <input
                   type="email"
                   value={profileForm.email}
-                  onChange={(e) => setProfileForm((f) => ({ ...f, email: e.target.value }))}
+                  onChange={(e) =>
+                    setProfileForm((f) => ({ ...f, email: e.target.value }))
+                  }
                   placeholder="tu@email.com"
                 />
-                <span style={{ fontSize: "0.78rem", color: "var(--muted)", fontStyle: "italic" }}>
-                  Si cambiás el email, recibirás un link de confirmación en la nueva dirección.
+                <span
+                  style={{
+                    fontSize: "0.78rem",
+                    color: "var(--muted)",
+                    fontStyle: "italic",
+                  }}
+                >
+                  Si cambiás el email, recibirás un link de confirmación en la
+                  nueva dirección.
                 </span>
               </div>
 
               <div style={{ display: "flex", justifyContent: "flex-end" }}>
-                <button type="submit" className="btn btn-primary" disabled={profileSaving}>
-                  {profileSaving ? <span className="btn-spinner" /> : <><Save size={15} /> Guardar cambios</>}
+                <button
+                  type="submit"
+                  className="btn btn-primary"
+                  disabled={profileSaving}
+                >
+                  {profileSaving ? (
+                    <span className="btn-spinner" />
+                  ) : (
+                    <>
+                      <Save size={15} /> Guardar cambios
+                    </>
+                  )}
                 </button>
               </div>
             </form>

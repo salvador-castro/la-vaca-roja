@@ -59,10 +59,10 @@ export default function Footer() {
           {/* Brand */}
           <div>
             <div className="footer-brand-logo">
-              <img 
-                src="https://gfjkhzudkctakwcyqmmj.supabase.co/storage/v1/object/public/logo/logoLaVacaRoja.png" 
-                alt="La Vaca Roja" 
-                style={{ height: '90px', width: 'auto', objectFit: 'contain' }} 
+              <img
+                src="https://gfjkhzudkctakwcyqmmj.supabase.co/storage/v1/object/public/logo/logoLaVacaRoja.png"
+                alt="La Vaca Roja"
+                style={{ height: '90px', width: 'auto', objectFit: 'contain' }}
               />
             </div>
             <p className="footer-desc">

@@ -34,7 +34,9 @@ export default function Cart() {
     setCheckoutLoading(true);
     setCheckoutError(null);
     try {
-      const { data: { session } } = await supabase.auth.getSession();
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
       if (!session) {
         navigate("/login");
         return;
@@ -66,8 +68,11 @@ export default function Cart() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Error al iniciar el pago");
 
-      const useSandbox = import.meta.env.DEV || import.meta.env.VITE_MP_SANDBOX === "true";
-      const checkoutUrl = useSandbox ? data.sandbox_init_point : data.init_point;
+      const useSandbox =
+        import.meta.env.DEV || import.meta.env.VITE_MP_SANDBOX === "true";
+      const checkoutUrl = useSandbox
+        ? data.sandbox_init_point
+        : data.init_point;
 
       window.location.href = checkoutUrl;
     } catch (err) {
@@ -174,19 +179,27 @@ export default function Cart() {
                     <div className="qty-controls">
                       {(() => {
                         const step = item.unit === "kg" ? 0.5 : 1;
-                        const newQtyDown = parseFloat((item.qty - step).toFixed(1));
-                        const newQtyUp = parseFloat((item.qty + step).toFixed(1));
+                        const newQtyDown = parseFloat(
+                          (item.qty - step).toFixed(1),
+                        );
+                        const newQtyUp = parseFloat(
+                          (item.qty + step).toFixed(1),
+                        );
                         return (
                           <>
                             <button
                               className="qty-btn"
-                              onClick={() => updateQty(item.cartKey, newQtyDown)}
+                              onClick={() =>
+                                updateQty(item.cartKey, newQtyDown)
+                              }
                               aria-label="Restar cantidad"
                               id={`qty-minus-${item.cartKey}`}
                             >
                               <Minus size={14} />
                             </button>
-                            <span className="qty-value">{item.unit === "kg" ? `${item.qty} kg` : item.qty}</span>
+                            <span className="qty-value">
+                              {item.unit === "kg" ? `${item.qty} kg` : item.qty}
+                            </span>
                             <button
                               className="qty-btn"
                               onClick={() => updateQty(item.cartKey, newQtyUp)}
@@ -285,9 +298,15 @@ export default function Cart() {
             <div style={{ marginBottom: 16 }}>
               <label
                 htmlFor="order-notes"
-                style={{ display: "block", fontSize: "0.82rem", color: "var(--muted)", marginBottom: 6 }}
+                style={{
+                  display: "block",
+                  fontSize: "0.82rem",
+                  color: "var(--muted)",
+                  marginBottom: 6,
+                }}
               >
-                Comentarios del pedido <span style={{ fontStyle: "italic" }}>(opcional)</span>
+                Comentarios del pedido{" "}
+                <span style={{ fontStyle: "italic" }}>(opcional)</span>
               </label>
               <textarea
                 id="order-notes"
@@ -336,8 +355,18 @@ export default function Cart() {
               style={{ opacity: checkoutLoading ? 0.7 : 1 }}
             >
               {checkoutLoading ? (
-                <span style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
-                  <Loader size={16} style={{ animation: "spin 1s linear infinite" }} />
+                <span
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: 8,
+                  }}
+                >
+                  <Loader
+                    size={16}
+                    style={{ animation: "spin 1s linear infinite" }}
+                  />
                   Procesando...
                 </span>
               ) : (

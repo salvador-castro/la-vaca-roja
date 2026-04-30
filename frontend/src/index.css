@@ -39,7 +39,7 @@
   --transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   --transition-bounce: 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
 
-  --nav-h: 68px;
+  --nav-h: 100px;
 }
 
 /* --- Reset --- */
@@ -2373,4 +2373,111 @@ body::after {
 @media (max-width: 480px) {
   .product-grid { grid-template-columns: 1fr; }
   .hero-title { font-size: clamp(3rem, 14vw, 5rem); }
+}
+
+/* ===================================================
+   PRODUCT MODAL
+   =================================================== */
+.product-card-info-btn {
+  margin-top: 10px;
+  width: 100%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.product-modal {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: min(880px, calc(100vw - 32px));
+  max-height: calc(100vh - 40px);
+  overflow-y: auto;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  z-index: 1101;
+  animation: fade-in 0.2s ease;
+}
+
+.product-modal-close {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  background: var(--surface);
+  z-index: 2;
+}
+
+.product-modal-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0;
+}
+
+.product-modal-img-wrap {
+  position: relative;
+  background: var(--surface-2);
+  aspect-ratio: 1 / 1;
+  overflow: hidden;
+}
+
+.product-modal-img-wrap img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.product-modal-body {
+  padding: 28px;
+  display: flex;
+  flex-direction: column;
+}
+
+.product-modal-name {
+  font-family: var(--font-head);
+  font-size: clamp(1.6rem, 3vw, 2.2rem);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text);
+  line-height: 1.05;
+  margin-top: 6px;
+}
+
+.product-modal-desc {
+  font-size: 0.95rem;
+  color: var(--muted);
+  line-height: 1.6;
+  margin-top: 10px;
+}
+
+.product-modal-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-top: auto;
+  padding-top: 18px;
+  border-top: 1px solid var(--border);
+  flex-wrap: wrap;
+}
+
+.product-modal-add {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.product-modal-add.added {
+  background: #2e7d32;
+  border-color: #2e7d32;
+  color: #fff;
+}
+
+@media (max-width: 720px) {
+  .product-modal-grid { grid-template-columns: 1fr; }
+  .product-modal-img-wrap { aspect-ratio: 16 / 10; }
+  .product-modal-body { padding: 20px; }
 }
