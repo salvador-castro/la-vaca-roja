@@ -25,7 +25,7 @@ function usePromos() {
     supabase
       .from("products")
       .select("*")
-      .eq("category", "Promociones")
+      .eq("is_combo", true)
       .eq("active", true)
       .order("created_at", { ascending: false })
       .then(({ data }) => { setPromos(data || []); setLoading(false); });
