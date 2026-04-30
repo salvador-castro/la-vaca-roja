@@ -12,7 +12,14 @@ export default function PaymentSuccess() {
   }, [clearCart]);
 
   return (
-    <main style={{ minHeight: "70vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
+    <main
+      style={{
+        minHeight: "70vh",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+      }}
+    >
       <div
         style={{
           textAlign: "center",
@@ -24,18 +31,38 @@ export default function PaymentSuccess() {
         }}
       >
         <div style={{ fontSize: "4rem", marginBottom: 16 }}>✅</div>
-        <h1 style={{ fontFamily: "var(--font-display)", fontSize: "2rem", marginBottom: 12 }}>
+        <h1
+          style={{
+            fontFamily: "var(--font-display)",
+            fontSize: "2rem",
+            marginBottom: 12,
+          }}
+        >
           ¡Pago exitoso!
         </h1>
         <p style={{ color: "var(--muted)", marginBottom: 8 }}>
           Tu pedido fue confirmado y ya está en preparación.
         </p>
         {orderId && (
-          <p style={{ fontSize: "0.82rem", color: "var(--muted)", marginBottom: 24 }}>
-            N.° de pedido: <strong style={{ color: "var(--text)" }}>#{orderId}</strong>
+          <p
+            style={{
+              fontSize: "0.82rem",
+              color: "var(--muted)",
+              marginBottom: 24,
+            }}
+          >
+            N.° de pedido:{" "}
+            <strong style={{ color: "var(--text)" }}>#{orderId}</strong>
           </p>
         )}
-        <div style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
+        <div
+          style={{
+            display: "flex",
+            gap: 12,
+            justifyContent: "center",
+            flexWrap: "wrap",
+          }}
+        >
           <Link to="/dashboard" className="btn btn-primary">
             Ver mis pedidos
           </Link>

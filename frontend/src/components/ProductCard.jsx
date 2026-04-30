@@ -1,6 +1,7 @@
 import { useState } from "react";
-import { ShoppingCart, Check } from "lucide-react";
+import { ShoppingCart, Check, Info } from "lucide-react";
 import { useCart } from "../context/CartContext";
+import ProductModal from "./ProductModal";
 
 const formatPrice = (p) =>
   new Intl.NumberFormat("es-AR", {
@@ -15,6 +16,7 @@ const isKg = (unit) => unit === "kg";
 export default function ProductCard({ product }) {
   const { addItem } = useCart();
   const [added, setAdded] = useState(false);
+  const [modalOpen, setModalOpen] = useState(false);
   const [selectedVariant, setSelectedVariant] = useState(
     product.has_variants ? (product.variants[0] ?? null) : null
   );
@@ -107,7 +109,23 @@ export default function ProductCard({ product }) {
             )}
           </button>
         </div>
+
+        <button
+          className="btn btn-ghost btn-sm product-card-info-btn"
+          type="button"
+          onClick={() => setModalOpen(true)}
+          id={`info-btn-${product.id}`}
+          aria-label={`Más info de ${product.name}`}
+        >
+          <Info size={14} /> Más info
+        </button>
       </div>
+
+      <ProductModal
+        product={product}
+        open={modalOpen}
+        onClose={() => setModalOpen(false)}
+      />
     </article>
   );
 }

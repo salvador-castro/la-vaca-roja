@@ -1,6 +1,13 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { ShoppingCart, Menu, X, User, LogOut, LayoutDashboard } from "lucide-react";
+import {
+  ShoppingCart,
+  Menu,
+  X,
+  User,
+  LogOut,
+  LayoutDashboard,
+} from "lucide-react";
 import { useCart } from "../context/CartContext";
 import { useAuth } from "../context/AuthContext";
 
@@ -64,28 +71,44 @@ export default function Navbar() {
       <nav className={`navbar ${scrolled ? "scrolled" : ""}`} id="main-navbar">
         <div className="navbar-inner">
           <Link to="/" className="nav-logo" id="nav-logo">
-            <img 
-              src="https://gfjkhzudkctakwcyqmmj.supabase.co/storage/v1/object/public/logo/logoLaVacaRoja.png" 
-              alt="La Vaca Roja" 
-              style={{ height: '120px', width: 'auto', objectFit: 'contain' }}
+            <img
+              src="https://gfjkhzudkctakwcyqmmj.supabase.co/storage/v1/object/public/logo/logoLaVacaRoja.png"
+              alt="La Vaca Roja"
+              style={{
+                height: "110px",
+                width: "auto",
+                objectFit: "contain",
+                marginTop: "3px",
+                marginBottom: "3px",
+              }}
             />
           </Link>
 
           {!isDashboardAdmin && (
             <ul className="nav-links">
               <li>
-                <button className="nav-link-btn" onClick={handleInicio}>Inicio</button>
+                <button className="nav-link-btn" onClick={handleInicio}>
+                  Inicio
+                </button>
               </li>
               <li>
-                <Link to="/shop" className={isActive("/shop")}>Tienda</Link>
+                <Link to="/shop" className={isActive("/shop")}>
+                  Tienda
+                </Link>
               </li>
               <li>
-                <button className="nav-link-btn" onClick={() => handleHashLink("promos")}>
+                <button
+                  className="nav-link-btn"
+                  onClick={() => handleHashLink("promos")}
+                >
                   Promociones
                 </button>
               </li>
               <li>
-                <button className="nav-link-btn" onClick={() => handleHashLink("nosotros")}>
+                <button
+                  className="nav-link-btn"
+                  onClick={() => handleHashLink("nosotros")}
+                >
                   Nosotros
                 </button>
               </li>
@@ -97,12 +120,24 @@ export default function Navbar() {
               <div className="nav-actions">
                 {user ? (
                   <div className="nav-user-menu">
-                    <Link to="/dashboard" className="nav-user-btn" title="Mi cuenta">
+                    <Link
+                      to="/dashboard"
+                      className="nav-user-btn"
+                      title="Mi cuenta"
+                    >
                       <User size={15} />
-                      <span>{profile?.full_name?.split(" ")[0] || "Mi cuenta"}</span>
-                      {isAdmin && <span className="nav-admin-badge">Admin</span>}
+                      <span>
+                        {profile?.full_name?.split(" ")[0] || "Mi cuenta"}
+                      </span>
+                      {isAdmin && (
+                        <span className="nav-admin-badge">Admin</span>
+                      )}
                     </Link>
-                    <button className="nav-signout-btn" onClick={handleSignOut} title="Cerrar sesión">
+                    <button
+                      className="nav-signout-btn"
+                      onClick={handleSignOut}
+                      title="Cerrar sesión"
+                    >
                       <LogOut size={15} />
                     </button>
                   </div>
@@ -122,7 +157,9 @@ export default function Navbar() {
                   <ShoppingCart size={16} strokeWidth={2.5} />
                   <span>Carrito</span>
                   {count > 0 && (
-                    <span className="nav-cart-badge" key={count}>{count}</span>
+                    <span className="nav-cart-badge" key={count}>
+                      {count}
+                    </span>
                   )}
                 </button>
               </div>
@@ -140,15 +177,28 @@ export default function Navbar() {
         </div>
       </nav>
 
-      <div className={`nav-mobile-menu ${mobileOpen ? "open" : ""}`} id="nav-mobile-menu">
+      <div
+        className={`nav-mobile-menu ${mobileOpen ? "open" : ""}`}
+        id="nav-mobile-menu"
+      >
         {!isDashboardAdmin && (
           <>
-            <button className="nav-mobile-link-btn" onClick={handleInicio}>🏠 Inicio</button>
-            <Link to="/shop" className={isActive("/shop")}>🛒 Tienda</Link>
-            <button className="nav-mobile-link-btn" onClick={() => handleHashLink("promos")}>
+            <button className="nav-mobile-link-btn" onClick={handleInicio}>
+              🏠 Inicio
+            </button>
+            <Link to="/shop" className={isActive("/shop")}>
+              🛒 Tienda
+            </Link>
+            <button
+              className="nav-mobile-link-btn"
+              onClick={() => handleHashLink("promos")}
+            >
               🔥 Promociones
             </button>
-            <button className="nav-mobile-link-btn" onClick={() => handleHashLink("nosotros")}>
+            <button
+              className="nav-mobile-link-btn"
+              onClick={() => handleHashLink("nosotros")}
+            >
               ⭐ Nosotros
             </button>
           </>
@@ -174,7 +224,10 @@ export default function Navbar() {
           <button
             className="btn btn-primary"
             style={{ marginTop: 8 }}
-            onClick={() => { setDrawerOpen(true); setMobileOpen(false); }}
+            onClick={() => {
+              setDrawerOpen(true);
+              setMobileOpen(false);
+            }}
           >
             <ShoppingCart size={16} /> Ver carrito {count > 0 && `(${count})`}
           </button>
