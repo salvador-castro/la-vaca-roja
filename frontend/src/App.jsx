@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { CartProvider } from "./context/CartContext";
 import { AuthProvider } from "./context/AuthContext";
 import Navbar from "./components/Navbar";
+import ShippingTopBar from "./components/ShippingTopBar";
 import Footer from "./components/Footer";
 import CartDrawer from "./components/CartDrawer";
 import PrivateRoute from "./components/PrivateRoute";
@@ -24,6 +25,7 @@ export default function App() {
       <AuthProvider>
         <CartProvider>
           <ScrollToTop />
+          <ShippingTopBar />
           <Navbar />
           <CartDrawer />
           <Routes>

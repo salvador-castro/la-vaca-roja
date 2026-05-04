@@ -17,6 +17,11 @@ export default function Shop() {
     window.scrollTo({ top: 0 });
   }, []);
 
+  useEffect(() => {
+    const cat = new URLSearchParams(location.search).get("cat") || "Todos";
+    setActiveCategory(cat);
+  }, [location.search]);
+
   const filtered = products.filter((p) => {
     const matchCat =
       activeCategory === "Todos" || p.category === activeCategory;
