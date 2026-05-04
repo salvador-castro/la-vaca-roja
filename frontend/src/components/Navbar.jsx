@@ -7,13 +7,18 @@ import {
   User,
   LogOut,
   LayoutDashboard,
+  ChevronDown,
 } from "lucide-react";
 import { useCart } from "../context/CartContext";
 import { useAuth } from "../context/AuthContext";
+import { supabase } from "../lib/supabase";
 
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [shopOpen, setShopOpen] = useState(false);
+  const [mobileShopOpen, setMobileShopOpen] = useState(false);
+  const [categories, setCategories] = useState([]);
   const { count, setDrawerOpen } = useCart();
   const { user, profile, signOut, isAdmin } = useAuth();
   const location = useLocation();
@@ -27,7 +32,26 @@ export default function Navbar() {
   }, []);
 
   useEffect(() => {
+    let cancelled = false;
+    supabase
+      .from("products")
+      .select("category")
+      .eq("active", true)
+      .then(({ data }) => {
+        if (cancelled || !data) return;
+        const unique = [...new Set(data.map((p) => p.category).filter(Boolean))];
+        unique.sort((a, b) => a.localeCompare(b, "es"));
+        setCategories(unique);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
     setMobileOpen(false);
+    setMobileShopOpen(false);
+    setShopOpen(false);
   }, [location]);
 
   const isActive = (path) => (location.pathname === path ? "active" : "");
@@ -91,10 +115,39 @@ export default function Navbar() {
                   Inicio
                 </button>
               </li>
-              <li>
-                <Link to="/shop" className={isActive("/shop")}>
+              <li
+                className="nav-shop-item"
+                onMouseEnter={() => setShopOpen(true)}
+                onMouseLeave={() => setShopOpen(false)}
+              >
+                <Link
+                  to="/shop"
+                  className={`nav-shop-trigger ${isActive("/shop")}`}
+                >
                   Tienda
+                  {categories.length > 0 && (
+                    <ChevronDown
+                      size={14}
+                      className={`nav-shop-caret ${shopOpen ? "open" : ""}`}
+                    />
+                  )}
                 </Link>
+                {shopOpen && categories.length > 0 && (
+                  <ul className="nav-submenu">
+                    <li>
+                      <Link to="/shop" className="nav-submenu-all">
+                        Ver todos
+                      </Link>
+                    </li>
+                    {categories.map((cat) => (
+                      <li key={cat}>
+                        <Link to={`/shop?cat=${encodeURIComponent(cat)}`}>
+                          {cat}
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                )}
               </li>
               <li>
                 <button
@@ -186,9 +239,41 @@ export default function Navbar() {
             <button className="nav-mobile-link-btn" onClick={handleInicio}>
               🏠 Inicio
             </button>
-            <Link to="/shop" className={isActive("/shop")}>
-              🛒 Tienda
-            </Link>
+            {categories.length > 0 ? (
+              <>
+                <button
+                  className="nav-mobile-link-btn nav-mobile-shop-toggle"
+                  onClick={() => setMobileShopOpen((o) => !o)}
+                  aria-expanded={mobileShopOpen}
+                >
+                  <span>🛒 Tienda</span>
+                  <ChevronDown
+                    size={16}
+                    className={`nav-shop-caret ${mobileShopOpen ? "open" : ""}`}
+                  />
+                </button>
+                {mobileShopOpen && (
+                  <div className="nav-mobile-submenu">
+                    <Link to="/shop" className="nav-mobile-submenu-link">
+                      Ver todos
+                    </Link>
+                    {categories.map((cat) => (
+                      <Link
+                        key={cat}
+                        to={`/shop?cat=${encodeURIComponent(cat)}`}
+                        className="nav-mobile-submenu-link"
+                      >
+                        {cat}
+                      </Link>
+                    ))}
+                  </div>
+                )}
+              </>
+            ) : (
+              <Link to="/shop" className={isActive("/shop")}>
+                🛒 Tienda
+              </Link>
+            )}
             <button
               className="nav-mobile-link-btn"
               onClick={() => handleHashLink("promos")}

@@ -66,7 +66,7 @@ const banks = [
 
 
 const features = [
-  { icon: Truck,       title: "Delivery mismo día",        desc: "Pedís antes de las 14hs y lo tenés en el día. CABA y GBA." },
+  { icon: Truck,       title: "Delivery mismo día",        desc: "Pedís antes de las 14hs y lo tenés en el día. Solo CABA." },
   { icon: ShieldCheck, title: "Frescura garantizada",       desc: "Todos los cortes son faenados el mismo día. Nada de freezado." },
   { icon: Award,       title: "20 años de trayectoria",    desc: "Desde 2004 en el barrio de Palermo, sirviendo a miles de familias." },
   { icon: Star,        title: "Calidad premium",            desc: "Sólo trabajamos con proveedores certificados. Razas selectas." },
@@ -145,6 +145,32 @@ export default function Home() {
                 <div className="hero-stat-label">{label}</div>
               </div>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ======= ENVÍO GRATIS BANNER ======= */}
+      <section className="shipping-banner" aria-label="Envío gratis desde 60.000 pesos">
+        <div className="shipping-banner-inner">
+          <div className="shipping-banner-icon">
+            <Truck size={88} strokeWidth={2} />
+          </div>
+          <div className="shipping-banner-text">
+            <span className="shipping-banner-eyebrow">Beneficio exclusivo · Solo CABA</span>
+            <h2 className="shipping-banner-title">
+              Envío <span className="accent">gratis</span>
+            </h2>
+            <p className="shipping-banner-sub">
+              En todas tus compras desde
+              <strong>$60.000</strong>
+            </p>
+            <div className="shipping-banner-fine">
+              Aplica únicamente en Capital Federal
+            </div>
+          </div>
+          <div className="shipping-banner-amount" aria-hidden="true">
+            <span className="shipping-banner-amount-label">desde</span>
+            <span className="shipping-banner-amount-value">$60.000</span>
           </div>
         </div>
       </section>
