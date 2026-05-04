@@ -4,13 +4,12 @@ import { supabase } from "../../lib/supabase";
 import * as XLSX from "xlsx";
 
 const API = `${import.meta.env.VITE_API_URL ?? "http://localhost:3000"}/api/products`;
-const CATEGORIES = ["Vacuno", "Cerdo", "Pollo", "Hamburguesas", "Embutidos"];
 
 const CUTS = ["Fino", "Medio", "Grueso"];
 
 const empty = {
   name: "",
-  category: "Vacuno",
+  category: "",
   description: "",
   price: "",
   stock: 0,
@@ -44,6 +43,7 @@ const apiCall = async (url, method, body) => {
 
 export default function AdminProducts() {
   const [products, setProducts] = useState([]);
+  const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [modal, setModal] = useState(null);
   const [form, setForm] = useState(empty);
@@ -58,7 +58,11 @@ export default function AdminProducts() {
   const fileInputRef = useRef(null);
   const imageInputRef = useRef(null);
 
-  useEffect(() => { fetchProducts(); }, []);
+  useEffect(() => {
+    fetchProducts();
+    supabase.from("categories").select("name").eq("active", true).order("name")
+      .then(({ data }) => setCategories((data || []).map((c) => c.name)));
+  }, []);
 
   const fetchProducts = async () => {
     setLoading(true);
@@ -71,7 +75,7 @@ export default function AdminProducts() {
     setLoading(false);
   };
 
-  const openCreate = () => { setForm(empty); setError(""); setModal({ mode: "create" }); };
+  const openCreate = () => { setForm({ ...empty, category: categories[0] ?? "" }); setError(""); setModal({ mode: "create" }); };
 
   const openEdit = async (p) => {
     setError("");
@@ -394,7 +398,7 @@ export default function AdminProducts() {
                 <div className="auth-field">
                   <label>Categoría</label>
                   <select value={form.category} onChange={set("category")}>
-                    {CATEGORIES.map((c) => <option key={c}>{c}</option>)}
+                    {categories.map((c) => <option key={c}>{c}</option>)}
                   </select>
                 </div>
               </div>
