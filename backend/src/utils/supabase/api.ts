@@ -1,29 +1,39 @@
 import { createClient as createServerSupabase } from "@supabase/supabase-js";
 import { NextRequest, NextResponse } from "next/server";
+import { headers } from "next/headers";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 
-const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:5173";
-
-/* CORS headers for frontend */
-export const corsHeaders = {
-  "Access-Control-Allow-Origin": FRONTEND_URL,
-  "Access-Control-Allow-Methods": "GET, POST, PUT, PATCH, DELETE, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type, Authorization",
-};
-
-export function corsResponse(data: unknown, status = 200) {
-  return NextResponse.json(data, { status, headers: corsHeaders });
+/* Cualquier subdominio de lavacaroja.com.ar (prod, admin, previews de test-*) + localhost */
+function isAllowedOrigin(origin: string) {
+  return (
+    origin.startsWith("http://localhost") ||
+    /^https:\/\/([a-z0-9-]+\.)*lavacaroja\.com\.ar$/.test(origin)
+  );
 }
 
-export function corsError(message: string, status = 400) {
-  return NextResponse.json({ error: message }, { status, headers: corsHeaders });
+/* CORS headers for frontend — reflejan el origin del request si está permitido */
+async function corsHeaders() {
+  const origin = (await headers()).get("origin") || "";
+  return {
+    "Access-Control-Allow-Origin": isAllowedOrigin(origin) ? origin : "",
+    "Access-Control-Allow-Methods": "GET, POST, PUT, PATCH, DELETE, OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type, Authorization",
+  };
 }
 
-export function handleOptions() {
-  return new NextResponse(null, { status: 204, headers: corsHeaders });
+export async function corsResponse(data: unknown, status = 200) {
+  return NextResponse.json(data, { status, headers: await corsHeaders() });
+}
+
+export async function corsError(message: string, status = 400) {
+  return NextResponse.json({ error: message }, { status, headers: await corsHeaders() });
+}
+
+export async function handleOptions() {
+  return new NextResponse(null, { status: 204, headers: await corsHeaders() });
 }
 
 /* Service-role client — bypasses RLS, use only after verifying auth in code */
