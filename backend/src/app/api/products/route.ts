@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 import {
-  corsHeaders, corsResponse, corsError,
+  corsResponse, corsError,
   handleOptions, createApiClient, requireAdmin,
 } from "@/utils/supabase/api";
 
