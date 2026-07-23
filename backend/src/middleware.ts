@@ -31,9 +31,11 @@ export async function middleware(request: NextRequest) {
   // CORS para las rutas API
   if (request.nextUrl.pathname.startsWith("/api/")) {
     const origin = request.headers.get("origin") || "";
-    const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
+    const isAllowedOrigin =
+      origin.startsWith("http://localhost") ||
+      /^https:\/\/([a-z0-9-]+\.)*lavacaroja\.com\.ar$/.test(origin);
 
-    if (origin === frontendUrl || origin.startsWith("http://localhost")) {
+    if (isAllowedOrigin) {
       supabaseResponse.headers.set("Access-Control-Allow-Origin", origin);
       supabaseResponse.headers.set(
         "Access-Control-Allow-Methods",
