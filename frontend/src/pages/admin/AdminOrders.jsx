@@ -17,6 +17,16 @@ const DELIVERY_LABELS = {
   delivery: "Envío a domicilio",
   pickup:   "Retiro en local",
 };
+const ZONE_LABELS = {
+  pickup: "Retiro en local",
+  zone_1_3: "Envío 1 a 3 km",
+  zone_3_5: "Envío 3 a 5 km",
+  zone_5_10: "Envío 5 a 10 km",
+};
+const PAYMENT_LABELS = {
+  mercadopago: "Mercado Pago",
+  transferencia: "Transferencia",
+};
 
 const STATUS_COLORS = {
   pending:   "#f5a623",
@@ -38,7 +48,8 @@ function downloadOrderTxt(order) {
     `Pedido #${order.id}`,
     `Fecha:    ${new Date(order.created_at).toLocaleString("es-AR")}`,
     `Estado:   ${STATUS_LABELS[order.status] || order.status}`,
-    `Entrega:  ${DELIVERY_LABELS[order.delivery_method] || order.delivery_method || "—"}`,
+    `Entrega:  ${ZONE_LABELS[order.shipping_zone] || DELIVERY_LABELS[order.delivery_method] || order.delivery_method || "—"}`,
+    `Pago:     ${PAYMENT_LABELS[order.payment_method] || order.payment_method || "—"}`,
     "",
     "--- CLIENTE ---",
     `Nombre:   ${profile.full_name || "—"}`,
@@ -54,6 +65,8 @@ function downloadOrderTxt(order) {
     "",
     `Subtotal:         ${formatPrice(order.subtotal)}`,
     order.coupon_discount > 0 ? `Descuento cupón:  -${formatPrice(order.coupon_discount)}` : null,
+    order.transfer_discount > 0 ? `Descuento transf.:-${formatPrice(order.transfer_discount)}` : null,
+    order.shipping_cost > 0 ? `Envío:            ${formatPrice(order.shipping_cost)}` : null,
     `TOTAL:            ${formatPrice(order.total)}`,
     "",
     order.notes ? `--- COMENTARIOS ---\n${order.notes}` : null,
@@ -390,7 +403,13 @@ export default function AdminOrders() {
                 className="admin-status-pill"
                 style={{ color: "var(--muted)", borderColor: "var(--border)" }}
               >
-                {DELIVERY_LABELS[viewModal.delivery_method] || "—"}
+                {ZONE_LABELS[viewModal.shipping_zone] || DELIVERY_LABELS[viewModal.delivery_method] || "—"}
+              </span>
+              <span
+                className="admin-status-pill"
+                style={{ color: "var(--muted)", borderColor: "var(--border)" }}
+              >
+                {PAYMENT_LABELS[viewModal.payment_method] || "—"}
               </span>
             </div>
 
@@ -458,6 +477,18 @@ export default function AdminOrders() {
                 <div style={{ display: "flex", justifyContent: "space-between" }}>
                   <span style={{ color: "var(--muted)" }}>Descuento cupón</span>
                   <span style={{ color: "#22c55e" }}>−{formatPrice(viewModal.coupon_discount)}</span>
+                </div>
+              )}
+              {(viewModal.transfer_discount ?? 0) > 0 && (
+                <div style={{ display: "flex", justifyContent: "space-between" }}>
+                  <span style={{ color: "var(--muted)" }}>Descuento transferencia</span>
+                  <span style={{ color: "#22c55e" }}>−{formatPrice(viewModal.transfer_discount)}</span>
+                </div>
+              )}
+              {(viewModal.shipping_cost ?? 0) > 0 && (
+                <div style={{ display: "flex", justifyContent: "space-between" }}>
+                  <span style={{ color: "var(--muted)" }}>Envío</span>
+                  <span>{formatPrice(viewModal.shipping_cost)}</span>
                 </div>
               )}
               <div style={{ display: "flex", justifyContent: "space-between", fontWeight: 700, fontSize: "1rem", paddingTop: 6, borderTop: "1px solid var(--border)" }}>

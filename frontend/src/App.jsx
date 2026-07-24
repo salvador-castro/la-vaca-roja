@@ -18,6 +18,7 @@ import PaymentSuccess from "./pages/PaymentSuccess";
 import PaymentPending from "./pages/PaymentPending";
 import PaymentFailure from "./pages/PaymentFailure";
 import ResetPassword from "./pages/ResetPassword";
+import TransferConfirmation from "./pages/TransferConfirmation";
 
 export default function App() {
   return (
@@ -45,6 +46,7 @@ export default function App() {
             <Route path="/pago/exitoso" element={<PaymentSuccess />} />
             <Route path="/pago/pendiente" element={<PaymentPending />} />
             <Route path="/pago/fallido" element={<PaymentFailure />} />
+            <Route path="/transferencia/:orderId" element={<TransferConfirmation />} />
             <Route path="/reset-password" element={<ResetPassword />} />
           </Routes>
           <Footer />

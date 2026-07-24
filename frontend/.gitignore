@@ -23,6 +23,6 @@ dist-ssr
 *.sln
 *.sw?
 
-# SQL scripts sensibles
-src/lib/schema.sql
-src/lib/security_patch.sql
+# SQL scripts y directorio lib
+src/lib/
+

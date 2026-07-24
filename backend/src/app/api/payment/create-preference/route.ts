@@ -25,25 +25,46 @@ type CartItem = {
   line_total: number;
 };
 
+type Zone = "pickup" | "zone_1_3" | "zone_3_5" | "zone_5_10";
+type PaymentMethod = "mercadopago" | "transferencia";
+
 export async function POST(req: NextRequest) {
   const user = await getAuthUser(req);
   if (!user) return corsError("Debe estar autenticado para comprar", 401);
 
   const body = await req.json();
-  const { items, coupon_id, notes, shipping, delivery_method } = body as {
+  const { items, coupon_id, notes, zone, payment_method } = body as {
     items: CartItem[];
     coupon_id?: number;
     notes?: string;
-    shipping: number;
-    delivery_method?: string;
+    zone: Zone;
+    payment_method: PaymentMethod;
   };
 
   if (!items?.length) return corsError("El carrito está vacío", 400);
+  if (!["pickup", "zone_1_3", "zone_3_5", "zone_5_10"].includes(zone))
+    return corsError("Zona de envío inválida", 400);
+  if (!["mercadopago", "transferencia"].includes(payment_method))
+    return corsError("Método de pago inválido", 400);
 
   const supabase = createApiClient(req);
 
+  const { data: settingsRows } = await supabase
+    .from("settings")
+    .select("key, value");
+  const settings: Record<string, string> = {};
+  (settingsRows ?? []).forEach((s) => { settings[s.key] = s.value; });
+
+  const freeShippingMin = Number(settings.free_shipping_min ?? 60000);
+  const transferPercent = Number(settings.transfer_discount_percent ?? 10);
+  const zoneCosts: Record<Zone, number> = {
+    pickup: 0,
+    zone_1_3: Number(settings.shipping_zone_1_3 ?? 3500),
+    zone_3_5: Number(settings.shipping_zone_3_5 ?? 4500),
+    zone_5_10: Number(settings.shipping_zone_5_10 ?? 6000),
+  };
+
   const subtotal = items.reduce((sum, item) => sum + item.line_total, 0);
-  const shippingCost = shipping ?? 0;
 
   let couponDiscount = 0;
   let coupon = null;
@@ -65,7 +86,13 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  const total = subtotal - couponDiscount + shippingCost;
+  const subtotalConCupon = subtotal - couponDiscount;
+  const transferDiscount =
+    payment_method === "transferencia" ? subtotalConCupon * (transferPercent / 100) : 0;
+  const montoConDescuento = subtotalConCupon - transferDiscount;
+  const shippingCost =
+    zone === "pickup" ? 0 : montoConDescuento >= freeShippingMin ? 0 : zoneCosts[zone];
+  const total = montoConDescuento + shippingCost;
 
   // Crear orden en Supabase
   const { data: order, error: orderError } = await supabase
@@ -78,7 +105,11 @@ export async function POST(req: NextRequest) {
       coupon_discount: couponDiscount,
       total,
       notes: notes ?? null,
-      delivery_method: delivery_method ?? "delivery",
+      delivery_method: zone === "pickup" ? "pickup" : "delivery",
+      payment_method,
+      transfer_discount: transferDiscount,
+      shipping_cost: shippingCost,
+      shipping_zone: zone,
     })
     .select()
     .single();
@@ -99,6 +130,13 @@ export async function POST(req: NextRequest) {
       .from("coupons")
       .update({ uses_count: (coupon.uses_count ?? 0) + 1 })
       .eq("id", coupon.id);
+  }
+
+  if (payment_method === "transferencia") {
+    return corsResponse(
+      { order_id: order.id, payment_method: "transferencia", total },
+      201
+    );
   }
 
   // Armar preferencia de MP
@@ -140,6 +178,7 @@ export async function POST(req: NextRequest) {
       init_point: result.init_point,
       sandbox_init_point: result.sandbox_init_point,
       order_id: order.id,
+      payment_method: "mercadopago",
     },
     201
   );

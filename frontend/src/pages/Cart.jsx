@@ -2,13 +2,20 @@ import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
   Trash2, Minus, Plus, ShoppingBag, ArrowLeft, Loader,
-  MapPin, Store, AlertTriangle,
+  MapPin, AlertTriangle, CreditCard, Landmark,
 } from "lucide-react";
 import { useCart } from "../context/CartContext";
 import { useAuth } from "../context/AuthContext";
 import { supabase } from "../lib/supabase";
 
 const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:3000";
+
+const ZONE_LABELS = {
+  pickup: "Retiro en local",
+  zone_1_3: "Envío 1 a 3 km",
+  zone_3_5: "Envío 3 a 5 km",
+  zone_5_10: "Envío 5 a 10 km",
+};
 
 export default function Cart() {
   const { items, removeItem, updateQty, total, clearCart, coupon } = useCart();
@@ -18,9 +25,11 @@ export default function Cart() {
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [checkoutError, setCheckoutError] = useState(null);
   const [notes, setNotes] = useState("");
-  const [deliveryMethod, setDeliveryMethod] = useState("delivery");
-  const [freeShippingMin, setFreeShippingMin] = useState(15000);
-  const [shippingCost, setShippingCost] = useState(1500);
+  const [zone, setZone] = useState("");
+  const [paymentMethod, setPaymentMethod] = useState("mercadopago");
+  const [freeShippingMin, setFreeShippingMin] = useState(60000);
+  const [zoneCosts, setZoneCosts] = useState({ zone_1_3: 3500, zone_3_5: 4500, zone_5_10: 6000 });
+  const [transferPercent, setTransferPercent] = useState(10);
 
   const formatPrice = (p) =>
     new Intl.NumberFormat("es-AR", {
@@ -30,24 +39,33 @@ export default function Cart() {
       maximumFractionDigits: 2,
     }).format(p);
 
-  // Cargar mínimo para envío gratis desde el backend
+  // Cargar configuración de envío y descuento desde el backend
   useEffect(() => {
     fetch(`${API_URL}/api/settings`)
       .then((r) => r.json())
       .then((data) => {
         if (data?.free_shipping_min) setFreeShippingMin(Number(data.free_shipping_min));
-        if (data?.shipping_cost) setShippingCost(Number(data.shipping_cost));
+        setZoneCosts({
+          zone_1_3: data?.shipping_zone_1_3 ? Number(data.shipping_zone_1_3) : 3500,
+          zone_3_5: data?.shipping_zone_3_5 ? Number(data.shipping_zone_3_5) : 4500,
+          zone_5_10: data?.shipping_zone_5_10 ? Number(data.shipping_zone_5_10) : 6000,
+        });
+        if (data?.transfer_discount_percent) setTransferPercent(Number(data.transfer_discount_percent));
       })
       .catch(() => {});
   }, []);
 
-  const isPickup = deliveryMethod === "pickup";
+  const isPickup = zone === "pickup";
   const hasAddress = Boolean(profile?.address?.trim());
+  const isTransfer = paymentMethod === "transferencia";
 
-  const shipping = isPickup ? 0 : (total >= freeShippingMin ? 0 : shippingCost);
-  const finalTotal = total + shipping;
+  const transferDiscount = isTransfer ? total * (transferPercent / 100) : 0;
+  const montoConDescuento = total - transferDiscount;
+  const shippingCost = zone && !isPickup ? zoneCosts[zone] ?? 0 : 0;
+  const shipping = !zone || isPickup ? 0 : (montoConDescuento >= freeShippingMin ? 0 : shippingCost);
+  const finalTotal = montoConDescuento + shipping;
 
-  const canCheckout = isPickup || hasAddress;
+  const canCheckout = Boolean(zone) && (isPickup || hasAddress);
 
   const handleCheckout = async () => {
     if (!canCheckout) return;
@@ -73,8 +91,8 @@ export default function Cart() {
         })),
         coupon_id: coupon?.id ?? null,
         notes: notes.trim() || null,
-        shipping,
-        delivery_method: deliveryMethod,
+        zone,
+        payment_method: paymentMethod,
       };
 
       const res = await fetch(`${API_URL}/api/payment/create-preference`, {
@@ -88,6 +106,12 @@ export default function Cart() {
 
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Error al iniciar el pago");
+
+      if (data.payment_method === "transferencia") {
+        clearCart();
+        navigate(`/transferencia/${data.order_id}`);
+        return;
+      }
 
       const useSandbox =
         import.meta.env.DEV || import.meta.env.VITE_MP_SANDBOX === "true";
@@ -279,60 +303,38 @@ export default function Cart() {
           <div className="cart-summary" id="cart-summary">
             <div className="cart-summary-title">Resumen del pedido</div>
 
-            {/* Método de entrega */}
+            {/* Zona de envío */}
             <div style={{ marginBottom: 16 }}>
-              <div style={{ fontSize: "0.82rem", color: "var(--muted)", marginBottom: 8 }}>
-                Método de entrega
-              </div>
-              <div style={{ display: "flex", gap: 8 }}>
-                <button
-                  onClick={() => setDeliveryMethod("delivery")}
-                  style={{
-                    flex: 1,
-                    display: "flex",
-                    flexDirection: "column",
-                    alignItems: "center",
-                    gap: 6,
-                    padding: "12px 8px",
-                    borderRadius: "var(--radius)",
-                    border: `2px solid ${deliveryMethod === "delivery" ? "var(--red)" : "var(--border)"}`,
-                    background: deliveryMethod === "delivery" ? "rgba(200,16,46,0.06)" : "var(--surface)",
-                    color: deliveryMethod === "delivery" ? "var(--red)" : "var(--muted)",
-                    cursor: "pointer",
-                    fontSize: "0.8rem",
-                    fontWeight: deliveryMethod === "delivery" ? 600 : 400,
-                    transition: "all 0.2s",
-                  }}
-                >
-                  <MapPin size={18} />
-                  Envío a domicilio
-                </button>
-                <button
-                  onClick={() => setDeliveryMethod("pickup")}
-                  style={{
-                    flex: 1,
-                    display: "flex",
-                    flexDirection: "column",
-                    alignItems: "center",
-                    gap: 6,
-                    padding: "12px 8px",
-                    borderRadius: "var(--radius)",
-                    border: `2px solid ${deliveryMethod === "pickup" ? "var(--red)" : "var(--border)"}`,
-                    background: deliveryMethod === "pickup" ? "rgba(200,16,46,0.06)" : "var(--surface)",
-                    color: deliveryMethod === "pickup" ? "var(--red)" : "var(--muted)",
-                    cursor: "pointer",
-                    fontSize: "0.8rem",
-                    fontWeight: deliveryMethod === "pickup" ? 600 : 400,
-                    transition: "all 0.2s",
-                  }}
-                >
-                  <Store size={18} />
-                  Retiro en local
-                </button>
-              </div>
+              <label
+                htmlFor="zone-select"
+                style={{ display: "block", fontSize: "0.82rem", color: "var(--muted)", marginBottom: 8 }}
+              >
+                Entrega
+              </label>
+              <select
+                id="zone-select"
+                value={zone}
+                onChange={(e) => setZone(e.target.value)}
+                style={{
+                  width: "100%",
+                  padding: "10px 12px",
+                  background: "var(--surface)",
+                  border: "1px solid var(--border)",
+                  borderRadius: "var(--radius)",
+                  color: "var(--text)",
+                  fontSize: "0.85rem",
+                  outline: "none",
+                }}
+              >
+                <option value="" disabled>Seleccioná una opción</option>
+                <option value="pickup">{ZONE_LABELS.pickup} — Sin costo</option>
+                <option value="zone_1_3">{ZONE_LABELS.zone_1_3} — {formatPrice(zoneCosts.zone_1_3)}</option>
+                <option value="zone_3_5">{ZONE_LABELS.zone_3_5} — {formatPrice(zoneCosts.zone_3_5)}</option>
+                <option value="zone_5_10">{ZONE_LABELS.zone_5_10} — {formatPrice(zoneCosts.zone_5_10)}</option>
+              </select>
 
               {/* Alerta: falta dirección para envío a domicilio */}
-              {deliveryMethod === "delivery" && user && !hasAddress && (
+              {zone && !isPickup && user && !hasAddress && (
                 <div
                   style={{
                     marginTop: 10,
@@ -361,7 +363,7 @@ export default function Cart() {
                 </div>
               )}
 
-              {deliveryMethod === "delivery" && user && hasAddress && (
+              {zone && !isPickup && user && hasAddress && (
                 <div
                   style={{
                     marginTop: 10,
@@ -380,24 +382,73 @@ export default function Cart() {
                   {profile.address}
                 </div>
               )}
+            </div>
 
-              {deliveryMethod === "pickup" && (
+            {/* Método de pago */}
+            <div style={{ marginBottom: 16 }}>
+              <div style={{ fontSize: "0.82rem", color: "var(--muted)", marginBottom: 8 }}>
+                Método de pago
+              </div>
+              <div style={{ display: "flex", gap: 8 }}>
+                <button
+                  onClick={() => setPaymentMethod("mercadopago")}
+                  style={{
+                    flex: 1,
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    gap: 6,
+                    padding: "12px 8px",
+                    borderRadius: "var(--radius)",
+                    border: `2px solid ${paymentMethod === "mercadopago" ? "var(--red)" : "var(--border)"}`,
+                    background: paymentMethod === "mercadopago" ? "rgba(200,16,46,0.06)" : "var(--surface)",
+                    color: paymentMethod === "mercadopago" ? "var(--red)" : "var(--muted)",
+                    cursor: "pointer",
+                    fontSize: "0.8rem",
+                    fontWeight: paymentMethod === "mercadopago" ? 600 : 400,
+                    transition: "all 0.2s",
+                  }}
+                >
+                  <CreditCard size={18} />
+                  Mercado Pago
+                </button>
+                <button
+                  onClick={() => setPaymentMethod("transferencia")}
+                  style={{
+                    flex: 1,
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    gap: 6,
+                    padding: "12px 8px",
+                    borderRadius: "var(--radius)",
+                    border: `2px solid ${paymentMethod === "transferencia" ? "var(--red)" : "var(--border)"}`,
+                    background: paymentMethod === "transferencia" ? "rgba(200,16,46,0.06)" : "var(--surface)",
+                    color: paymentMethod === "transferencia" ? "var(--red)" : "var(--muted)",
+                    cursor: "pointer",
+                    fontSize: "0.8rem",
+                    fontWeight: paymentMethod === "transferencia" ? 600 : 400,
+                    transition: "all 0.2s",
+                  }}
+                >
+                  <Landmark size={18} />
+                  Transferencia
+                </button>
+              </div>
+
+              {isTransfer && (
                 <div
                   style={{
                     marginTop: 10,
                     padding: "8px 12px",
-                    background: "rgba(212,163,15,0.07)",
-                    border: "1px solid rgba(212,163,15,0.2)",
+                    background: "rgba(34,197,94,0.07)",
+                    border: "1px solid rgba(34,197,94,0.2)",
                     borderRadius: "var(--radius)",
                     fontSize: "0.78rem",
-                    color: "var(--gold)",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 8,
+                    color: "#16a34a",
                   }}
                 >
-                  <Store size={13} />
-                  Retirás en nuestro local — sin costo de envío
+                  🎉 {transferPercent}% de descuento aplicado. Te vamos a pasar el alias y los datos para transferir en el siguiente paso.
                 </div>
               )}
             </div>
@@ -407,10 +458,19 @@ export default function Cart() {
               <span>{formatPrice(total)}</span>
             </div>
 
+            {isTransfer && transferDiscount > 0 && (
+              <div className="summary-row">
+                <span>Descuento transferencia ({transferPercent}%)</span>
+                <span style={{ color: "#22c55e" }}>−{formatPrice(transferDiscount)}</span>
+              </div>
+            )}
+
             <div className="summary-row">
               <span>Envío</span>
-              <span style={{ color: shipping === 0 ? "#22c55e" : "var(--text)" }}>
-                {isPickup
+              <span style={{ color: shipping === 0 && zone ? "#22c55e" : "var(--text)" }}>
+                {!zone
+                  ? "—"
+                  : isPickup
                   ? "🏪 Sin costo (retiro)"
                   : shipping === 0
                   ? "🎉 Gratis"
@@ -418,7 +478,7 @@ export default function Cart() {
               </span>
             </div>
 
-            {!isPickup && shipping > 0 && (
+            {zone && !isPickup && shipping > 0 && (
               <div
                 style={{
                   marginTop: 8,
@@ -431,7 +491,7 @@ export default function Cart() {
                   lineHeight: 1.5,
                 }}
               >
-                🚀 Sumá {formatPrice(freeShippingMin - total)} más para envío gratis
+                🚀 Sumá {formatPrice(freeShippingMin - montoConDescuento)} más para envío gratis
               </div>
             )}
 
@@ -499,7 +559,7 @@ export default function Cart() {
               onClick={handleCheckout}
               disabled={checkoutLoading || !canCheckout}
               style={{ opacity: (checkoutLoading || !canCheckout) ? 0.55 : 1 }}
-              title={!canCheckout ? "Configurá tu dirección para envío a domicilio" : undefined}
+              title={!zone ? "Elegí una opción de entrega" : !canCheckout ? "Configurá tu dirección para envío a domicilio" : undefined}
             >
               {checkoutLoading ? (
                 <span
