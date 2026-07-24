@@ -1868,6 +1868,7 @@ body::after {
 .auth-eye-btn:hover { color: var(--text); }
 
 .address-autocomplete-wrap { position: relative; }
+.address-autocomplete-wrap input { width: 100%; box-sizing: border-box; }
 .address-suggestions {
   position: absolute;
   top: calc(100% + 4px);
