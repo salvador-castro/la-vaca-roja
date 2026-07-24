@@ -7,6 +7,7 @@ import {
   createApiClient,
   getAuthUser,
 } from "@/utils/supabase/api";
+import { resolveZoneFromAddress, type Zone } from "@/utils/shipping";
 
 const mp = new MercadoPagoConfig({
   accessToken: process.env.MP_ACCESS_TOKEN!,
@@ -25,29 +26,41 @@ type CartItem = {
   line_total: number;
 };
 
-type Zone = "pickup" | "zone_1_3" | "zone_3_5" | "zone_5_10";
 type PaymentMethod = "mercadopago" | "transferencia";
+type DeliveryMethod = "pickup" | "delivery";
 
 export async function POST(req: NextRequest) {
   const user = await getAuthUser(req);
   if (!user) return corsError("Debe estar autenticado para comprar", 401);
 
   const body = await req.json();
-  const { items, coupon_id, notes, zone, payment_method } = body as {
+  const { items, coupon_id, notes, delivery_method, payment_method } = body as {
     items: CartItem[];
     coupon_id?: number;
     notes?: string;
-    zone: Zone;
+    delivery_method: DeliveryMethod;
     payment_method: PaymentMethod;
   };
 
   if (!items?.length) return corsError("El carrito está vacío", 400);
-  if (!["pickup", "zone_1_3", "zone_3_5", "zone_5_10"].includes(zone))
-    return corsError("Zona de envío inválida", 400);
+  if (!["pickup", "delivery"].includes(delivery_method))
+    return corsError("Método de entrega inválido", 400);
   if (!["mercadopago", "transferencia"].includes(payment_method))
     return corsError("Método de pago inválido", 400);
 
   const supabase = createApiClient(req);
+
+  let zone: Zone = "pickup";
+  if (delivery_method === "delivery") {
+    const { data: profile } = await supabase
+      .from("profiles").select("address").eq("id", user.id).single();
+
+    if (!profile?.address?.trim()) return corsError("No tenés una dirección guardada", 400);
+
+    const zoneResult = await resolveZoneFromAddress(profile.address);
+    if ("error" in zoneResult) return corsError(zoneResult.error, 400);
+    zone = zoneResult.zone;
+  }
 
   const { data: settingsRows } = await supabase
     .from("settings")
@@ -105,7 +118,7 @@ export async function POST(req: NextRequest) {
       coupon_discount: couponDiscount,
       total,
       notes: notes ?? null,
-      delivery_method: zone === "pickup" ? "pickup" : "delivery",
+      delivery_method,
       payment_method,
       transfer_discount: transferDiscount,
       shipping_cost: shippingCost,

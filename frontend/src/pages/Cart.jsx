@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
   Trash2, Minus, Plus, ShoppingBag, ArrowLeft, Loader,
-  MapPin, AlertTriangle, CreditCard, Landmark,
+  MapPin, Store, AlertTriangle, CreditCard, Landmark,
 } from "lucide-react";
 import { useCart } from "../context/CartContext";
 import { useAuth } from "../context/AuthContext";
@@ -11,10 +11,9 @@ import { supabase } from "../lib/supabase";
 const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:3000";
 
 const ZONE_LABELS = {
-  pickup: "Retiro en local",
-  zone_1_3: "Envío 1 a 3 km",
-  zone_3_5: "Envío 3 a 5 km",
-  zone_5_10: "Envío 5 a 10 km",
+  zone_1_3: "1 a 3 km",
+  zone_3_5: "3 a 5 km",
+  zone_5_10: "5 a 10 km",
 };
 
 export default function Cart() {
@@ -25,11 +24,14 @@ export default function Cart() {
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [checkoutError, setCheckoutError] = useState(null);
   const [notes, setNotes] = useState("");
-  const [zone, setZone] = useState("");
-  const [paymentMethod, setPaymentMethod] = useState("mercadopago");
+  const [deliveryMethod, setDeliveryMethod] = useState("delivery");
   const [freeShippingMin, setFreeShippingMin] = useState(60000);
   const [zoneCosts, setZoneCosts] = useState({ zone_1_3: 3500, zone_3_5: 4500, zone_5_10: 6000 });
   const [transferPercent, setTransferPercent] = useState(10);
+  const [paymentMethod, setPaymentMethod] = useState("mercadopago");
+
+  const [zoneEstimate, setZoneEstimate] = useState(null); // { zone, distance_km } | { error } | null
+  const [estimating, setEstimating] = useState(false);
 
   const formatPrice = (p) =>
     new Intl.NumberFormat("es-AR", {
@@ -55,17 +57,45 @@ export default function Cart() {
       .catch(() => {});
   }, []);
 
-  const isPickup = zone === "pickup";
+  const isPickup = deliveryMethod === "pickup";
   const hasAddress = Boolean(profile?.address?.trim());
   const isTransfer = paymentMethod === "transferencia";
 
+  // Calcular la zona de envío automáticamente a partir de la dirección guardada
+  useEffect(() => {
+    if (isPickup || !user || !hasAddress) {
+      setZoneEstimate(null);
+      return;
+    }
+    let cancelled = false;
+    setEstimating(true);
+    setZoneEstimate(null);
+    (async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        const res = await fetch(`${API_URL}/api/shipping/estimate`, {
+          headers: { Authorization: `Bearer ${session?.access_token}` },
+        });
+        const data = await res.json();
+        if (cancelled) return;
+        setZoneEstimate(res.ok ? data : { error: data.error ?? "No pudimos calcular el envío" });
+      } catch {
+        if (!cancelled) setZoneEstimate({ error: "No pudimos calcular el envío" });
+      } finally {
+        if (!cancelled) setEstimating(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [isPickup, user, hasAddress]);
+
   const transferDiscount = isTransfer ? total * (transferPercent / 100) : 0;
   const montoConDescuento = total - transferDiscount;
-  const shippingCost = zone && !isPickup ? zoneCosts[zone] ?? 0 : 0;
-  const shipping = !zone || isPickup ? 0 : (montoConDescuento >= freeShippingMin ? 0 : shippingCost);
+  const resolvedZone = zoneEstimate && !zoneEstimate.error ? zoneEstimate.zone : null;
+  const shippingCost = resolvedZone ? zoneCosts[resolvedZone] ?? 0 : 0;
+  const shipping = isPickup ? 0 : resolvedZone ? (montoConDescuento >= freeShippingMin ? 0 : shippingCost) : 0;
   const finalTotal = montoConDescuento + shipping;
 
-  const canCheckout = Boolean(zone) && (isPickup || hasAddress);
+  const canCheckout = isPickup || (hasAddress && Boolean(resolvedZone));
 
   const handleCheckout = async () => {
     if (!canCheckout) return;
@@ -91,7 +121,7 @@ export default function Cart() {
         })),
         coupon_id: coupon?.id ?? null,
         notes: notes.trim() || null,
-        zone,
+        delivery_method: deliveryMethod,
         payment_method: paymentMethod,
       };
 
@@ -303,38 +333,60 @@ export default function Cart() {
           <div className="cart-summary" id="cart-summary">
             <div className="cart-summary-title">Resumen del pedido</div>
 
-            {/* Zona de envío */}
+            {/* Método de entrega */}
             <div style={{ marginBottom: 16 }}>
-              <label
-                htmlFor="zone-select"
-                style={{ display: "block", fontSize: "0.82rem", color: "var(--muted)", marginBottom: 8 }}
-              >
-                Entrega
-              </label>
-              <select
-                id="zone-select"
-                value={zone}
-                onChange={(e) => setZone(e.target.value)}
-                style={{
-                  width: "100%",
-                  padding: "10px 12px",
-                  background: "var(--surface)",
-                  border: "1px solid var(--border)",
-                  borderRadius: "var(--radius)",
-                  color: "var(--text)",
-                  fontSize: "0.85rem",
-                  outline: "none",
-                }}
-              >
-                <option value="" disabled>Seleccioná una opción</option>
-                <option value="pickup">{ZONE_LABELS.pickup} — Sin costo</option>
-                <option value="zone_1_3">{ZONE_LABELS.zone_1_3} — {formatPrice(zoneCosts.zone_1_3)}</option>
-                <option value="zone_3_5">{ZONE_LABELS.zone_3_5} — {formatPrice(zoneCosts.zone_3_5)}</option>
-                <option value="zone_5_10">{ZONE_LABELS.zone_5_10} — {formatPrice(zoneCosts.zone_5_10)}</option>
-              </select>
+              <div style={{ fontSize: "0.82rem", color: "var(--muted)", marginBottom: 8 }}>
+                Método de entrega
+              </div>
+              <div style={{ display: "flex", gap: 8 }}>
+                <button
+                  onClick={() => setDeliveryMethod("delivery")}
+                  style={{
+                    flex: 1,
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    gap: 6,
+                    padding: "12px 8px",
+                    borderRadius: "var(--radius)",
+                    border: `2px solid ${deliveryMethod === "delivery" ? "var(--red)" : "var(--border)"}`,
+                    background: deliveryMethod === "delivery" ? "rgba(200,16,46,0.06)" : "var(--surface)",
+                    color: deliveryMethod === "delivery" ? "var(--red)" : "var(--muted)",
+                    cursor: "pointer",
+                    fontSize: "0.8rem",
+                    fontWeight: deliveryMethod === "delivery" ? 600 : 400,
+                    transition: "all 0.2s",
+                  }}
+                >
+                  <MapPin size={18} />
+                  Envío a domicilio
+                </button>
+                <button
+                  onClick={() => setDeliveryMethod("pickup")}
+                  style={{
+                    flex: 1,
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    gap: 6,
+                    padding: "12px 8px",
+                    borderRadius: "var(--radius)",
+                    border: `2px solid ${deliveryMethod === "pickup" ? "var(--red)" : "var(--border)"}`,
+                    background: deliveryMethod === "pickup" ? "rgba(200,16,46,0.06)" : "var(--surface)",
+                    color: deliveryMethod === "pickup" ? "var(--red)" : "var(--muted)",
+                    cursor: "pointer",
+                    fontSize: "0.8rem",
+                    fontWeight: deliveryMethod === "pickup" ? 600 : 400,
+                    transition: "all 0.2s",
+                  }}
+                >
+                  <Store size={18} />
+                  Retiro en local
+                </button>
+              </div>
 
               {/* Alerta: falta dirección para envío a domicilio */}
-              {zone && !isPickup && user && !hasAddress && (
+              {deliveryMethod === "delivery" && user && !hasAddress && (
                 <div
                   style={{
                     marginTop: 10,
@@ -363,7 +415,44 @@ export default function Cart() {
                 </div>
               )}
 
-              {zone && !isPickup && user && hasAddress && (
+              {deliveryMethod === "delivery" && user && hasAddress && estimating && (
+                <div
+                  style={{
+                    marginTop: 10,
+                    padding: "8px 12px",
+                    fontSize: "0.78rem",
+                    color: "var(--muted)",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 8,
+                  }}
+                >
+                  <Loader size={13} style={{ animation: "spin 1s linear infinite" }} />
+                  Calculando zona de envío...
+                </div>
+              )}
+
+              {deliveryMethod === "delivery" && user && hasAddress && !estimating && zoneEstimate?.error && (
+                <div
+                  style={{
+                    marginTop: 10,
+                    padding: "10px 12px",
+                    background: "rgba(200,16,46,0.07)",
+                    border: "1px solid rgba(200,16,46,0.25)",
+                    borderRadius: "var(--radius)",
+                    fontSize: "0.78rem",
+                    color: "var(--red)",
+                    display: "flex",
+                    alignItems: "flex-start",
+                    gap: 8,
+                  }}
+                >
+                  <AlertTriangle size={14} style={{ flexShrink: 0, marginTop: 1 }} />
+                  {zoneEstimate.error}
+                </div>
+              )}
+
+              {deliveryMethod === "delivery" && user && hasAddress && !estimating && resolvedZone && (
                 <div
                   style={{
                     marginTop: 10,
@@ -379,7 +468,27 @@ export default function Cart() {
                   }}
                 >
                   <MapPin size={13} />
-                  {profile.address}
+                  {profile.address} — {ZONE_LABELS[resolvedZone]} ({zoneEstimate.distance_km} km)
+                </div>
+              )}
+
+              {deliveryMethod === "pickup" && (
+                <div
+                  style={{
+                    marginTop: 10,
+                    padding: "8px 12px",
+                    background: "rgba(212,163,15,0.07)",
+                    border: "1px solid rgba(212,163,15,0.2)",
+                    borderRadius: "var(--radius)",
+                    fontSize: "0.78rem",
+                    color: "var(--gold)",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 8,
+                  }}
+                >
+                  <Store size={13} />
+                  Retirás en nuestro local — sin costo de envío
                 </div>
               )}
             </div>
@@ -467,18 +576,18 @@ export default function Cart() {
 
             <div className="summary-row">
               <span>Envío</span>
-              <span style={{ color: shipping === 0 && zone ? "#22c55e" : "var(--text)" }}>
-                {!zone
-                  ? "—"
-                  : isPickup
+              <span style={{ color: shipping === 0 && (isPickup || resolvedZone) ? "#22c55e" : "var(--text)" }}>
+                {isPickup
                   ? "🏪 Sin costo (retiro)"
+                  : !resolvedZone
+                  ? "—"
                   : shipping === 0
                   ? "🎉 Gratis"
                   : formatPrice(shipping)}
               </span>
             </div>
 
-            {zone && !isPickup && shipping > 0 && (
+            {!isPickup && resolvedZone && shipping > 0 && (
               <div
                 style={{
                   marginTop: 8,
@@ -559,7 +668,7 @@ export default function Cart() {
               onClick={handleCheckout}
               disabled={checkoutLoading || !canCheckout}
               style={{ opacity: (checkoutLoading || !canCheckout) ? 0.55 : 1 }}
-              title={!zone ? "Elegí una opción de entrega" : !canCheckout ? "Configurá tu dirección para envío a domicilio" : undefined}
+              title={!canCheckout ? "Configurá tu dirección para envío a domicilio" : undefined}
             >
               {checkoutLoading ? (
                 <span
