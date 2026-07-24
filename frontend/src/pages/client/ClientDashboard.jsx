@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import {
   ShoppingBag, Package, Clock, CheckCircle, XCircle,
@@ -25,6 +25,9 @@ const statusMap = {
 // El cliente puede pedir cancelación/devolución en estos estados
 const CANCELLABLE_STATUSES = ["pending", "confirmed", "preparing"];
 
+// Bounding box de CABA (west,north,east,south) para acotar el autocomplete de Nominatim a la zona de envío
+const CABA_VIEWBOX = "-58.5315,-34.5265,-58.3350,-34.7052";
+
 export default function ClientDashboard() {
   const { user, profile, updateProfile } = useAuth();
   const [tab, setTab] = useState("orders");
@@ -37,6 +40,11 @@ export default function ClientDashboard() {
   });
   const [profileSaving, setProfileSaving] = useState(false);
   const [profileMsg, setProfileMsg] = useState(null);
+
+  const [addressSuggestions, setAddressSuggestions] = useState([]);
+  const [showAddressSuggestions, setShowAddressSuggestions] = useState(false);
+  const addressDebounceRef = useRef(null);
+  const addressAbortRef = useRef(null);
 
   useEffect(() => {
     if (profile) {
@@ -61,6 +69,47 @@ export default function ClientDashboard() {
       .order("created_at", { ascending: false });
     setOrders(data || []);
     setOrdersLoading(false);
+  };
+
+  const handleAddressChange = (value) => {
+    setProfileForm((f) => ({ ...f, address: value }));
+
+    clearTimeout(addressDebounceRef.current);
+    if (value.trim().length < 5) {
+      setAddressSuggestions([]);
+      return;
+    }
+
+    addressDebounceRef.current = setTimeout(async () => {
+      addressAbortRef.current?.abort();
+      const controller = new AbortController();
+      addressAbortRef.current = controller;
+      try {
+        const params = new URLSearchParams({
+          format: "json",
+          addressdetails: "1",
+          countrycodes: "ar",
+          viewbox: CABA_VIEWBOX,
+          bounded: "1",
+          limit: "5",
+          q: value,
+        });
+        const res = await fetch(`https://nominatim.openstreetmap.org/search?${params}`, {
+          signal: controller.signal,
+        });
+        const data = await res.json();
+        setAddressSuggestions(data || []);
+        setShowAddressSuggestions(true);
+      } catch (err) {
+        if (err.name !== "AbortError") setAddressSuggestions([]);
+      }
+    }, 450);
+  };
+
+  const handleAddressSelect = (suggestion) => {
+    setProfileForm((f) => ({ ...f, address: suggestion.display_name }));
+    setAddressSuggestions([]);
+    setShowAddressSuggestions(false);
   };
 
   const handleProfileSave = async (e) => {
@@ -335,11 +384,28 @@ export default function ClientDashboard() {
                 <label style={{ display: "flex", alignItems: "center", gap: 6 }}>
                   <MapPin size={14} /> Dirección de envío
                 </label>
-                <input
-                  value={profileForm.address}
-                  onChange={(e) => setProfileForm((f) => ({ ...f, address: e.target.value }))}
-                  placeholder="Ej: Av. Corrientes 1234, CABA"
-                />
+                <div className="address-autocomplete-wrap">
+                  <input
+                    value={profileForm.address}
+                    onChange={(e) => handleAddressChange(e.target.value)}
+                    onFocus={() => addressSuggestions.length > 0 && setShowAddressSuggestions(true)}
+                    onBlur={() => setTimeout(() => setShowAddressSuggestions(false), 150)}
+                    placeholder="Ej: Av. Corrientes 1234, CABA"
+                    autoComplete="off"
+                  />
+                  {showAddressSuggestions && addressSuggestions.length > 0 && (
+                    <ul className="address-suggestions">
+                      {addressSuggestions.map((s) => (
+                        <li key={s.place_id}>
+                          <button type="button" onMouseDown={() => handleAddressSelect(s)}>
+                            <MapPin size={13} />
+                            <span>{s.display_name}</span>
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
                 <span style={{ fontSize: "0.78rem", color: "var(--muted)", fontStyle: "italic" }}>
                   Necesaria para recibir pedidos a domicilio.
                 </span>
