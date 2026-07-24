@@ -355,14 +355,19 @@ export default function ClientDashboard() {
                     value={profileForm.full_name}
                     onChange={(e) => setProfileForm((f) => ({ ...f, full_name: e.target.value }))}
                     placeholder="Ej: Juan Pérez"
+                    required
                   />
                 </div>
                 <div className="auth-field">
                   <label>Teléfono</label>
                   <input
+                    type="tel"
                     value={profileForm.phone}
                     onChange={(e) => setProfileForm((f) => ({ ...f, phone: e.target.value }))}
                     placeholder="Ej: +54 11 1234-5678"
+                    pattern="^\+?[0-9\s\-]{6,20}$"
+                    title="Ingresá un teléfono válido (solo números, espacios, guiones y +)"
+                    required
                   />
                 </div>
               </div>
@@ -374,6 +379,7 @@ export default function ClientDashboard() {
                   value={profileForm.email}
                   onChange={(e) => setProfileForm((f) => ({ ...f, email: e.target.value }))}
                   placeholder="tu@email.com"
+                  required
                 />
                 <span style={{ fontSize: "0.78rem", color: "var(--muted)", fontStyle: "italic" }}>
                   Si cambiás el email, recibirás un link de confirmación en la nueva dirección.
@@ -392,6 +398,7 @@ export default function ClientDashboard() {
                     onBlur={() => setTimeout(() => setShowAddressSuggestions(false), 150)}
                     placeholder="Ej: Av. Corrientes 1234, CABA"
                     autoComplete="off"
+                    required
                   />
                   {showAddressSuggestions && addressSuggestions.length > 0 && (
                     <ul className="address-suggestions">
