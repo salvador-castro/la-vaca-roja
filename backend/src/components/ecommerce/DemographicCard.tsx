@@ -19,7 +19,7 @@ export default function DemographicCard() {
   }
 
   return (
-    <div className="rounded-2xl border border-gray-200 bg-white p-5 sm:p-6 dark:border-gray-800 dark:bg-white/[0.03]">
+    <div className="rounded-2xl border border-gray-200 bg-white p-5 sm:p-6 dark:border-gray-800 dark:bg-white/3">
       <div className="flex justify-between">
         <div>
           <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">
@@ -85,7 +85,7 @@ export default function DemographicCard() {
             </div>
           </div>
 
-          <div className="flex w-full max-w-[140px] items-center gap-3">
+          <div className="flex w-full max-w-35 items-center gap-3">
             <div className="relative block h-2 w-full max-w-[100px] rounded-sm bg-gray-200 dark:bg-gray-800">
               <div className="bg-brand-500 absolute top-0 left-0 flex h-full w-[79%] items-center justify-center rounded-sm text-xs font-medium text-white"></div>
             </div>
@@ -116,7 +116,7 @@ export default function DemographicCard() {
             </div>
           </div>
 
-          <div className="flex w-full max-w-[140px] items-center gap-3">
+          <div className="flex w-full max-w-35 items-center gap-3">
             <div className="relative block h-2 w-full max-w-[100px] rounded-sm bg-gray-200 dark:bg-gray-800">
               <div className="bg-brand-500 absolute top-0 left-0 flex h-full w-[23%] items-center justify-center rounded-sm text-xs font-medium text-white"></div>
             </div>
