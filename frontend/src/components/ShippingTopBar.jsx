@@ -27,6 +27,9 @@ export default function ShippingTopBar() {
             <strong className="amt">$60.000</strong>
             <span className="sep">·</span>
             <span>solo CABA</span>
+            <span className="sep">·</span>
+            <strong className="amt">10% OFF</strong>
+            <span>pagando con transferencia</span>
           </span>
         ))}
       </div>
