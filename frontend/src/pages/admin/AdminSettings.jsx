@@ -30,7 +30,7 @@ export default function AdminSettings() {
         return r.json();
       })
       .then((data) => {
-        setFreeShippingMin(data?.free_shipping_min !== undefined ? String(data.free_shipping_min) : "60000");
+        setFreeShippingMin(data?.free_shipping_min !== undefined ? String(data.free_shipping_min) : "90000");
         setShippingZone1_3(data?.shipping_zone_1_3 !== undefined ? String(data.shipping_zone_1_3) : "3500");
         setShippingZone3_5(data?.shipping_zone_3_5 !== undefined ? String(data.shipping_zone_3_5) : "4500");
         setShippingZone5_10(data?.shipping_zone_5_10 !== undefined ? String(data.shipping_zone_5_10) : "6000");
@@ -182,7 +182,7 @@ export default function AdminSettings() {
                   step="100"
                   value={freeShippingMin}
                   onChange={(e) => setFreeShippingMin(e.target.value)}
-                  placeholder="Ej: 60000"
+                  placeholder="Ej: 90000"
                 />
                 {freeShippingMin && (
                   <span style={{ fontSize: "0.78rem", color: "var(--muted)", fontStyle: "italic" }}>

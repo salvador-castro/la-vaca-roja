@@ -68,7 +68,7 @@ export async function POST(req: NextRequest) {
   const settings: Record<string, string> = {};
   (settingsRows ?? []).forEach((s) => { settings[s.key] = s.value; });
 
-  const freeShippingMin = Number(settings.free_shipping_min ?? 60000);
+  const freeShippingMin = Number(settings.free_shipping_min ?? 90000);
   const transferPercent = Number(settings.transfer_discount_percent ?? 10);
   const zoneCosts: Record<Zone, number> = {
     pickup: 0,
