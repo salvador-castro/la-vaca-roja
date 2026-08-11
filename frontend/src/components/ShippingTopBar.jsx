@@ -24,7 +24,7 @@ export default function ShippingTopBar() {
             <strong>Envío gratis</strong>
             <span className="sep">·</span>
             <span>en compras desde</span>
-            <strong className="amt">$60.000</strong>
+            <strong className="amt">$90.000</strong>
             <span className="sep">·</span>
             <span>solo CABA</span>
             <span className="sep">·</span>
