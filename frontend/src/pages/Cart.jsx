@@ -25,7 +25,7 @@ export default function Cart() {
   const [checkoutError, setCheckoutError] = useState(null);
   const [notes, setNotes] = useState("");
   const [deliveryMethod, setDeliveryMethod] = useState("delivery");
-  const [freeShippingMin, setFreeShippingMin] = useState(60000);
+  const [freeShippingMin, setFreeShippingMin] = useState(90000);
   const [zoneCosts, setZoneCosts] = useState({ zone_1_3: 3500, zone_3_5: 4500, zone_5_10: 6000 });
   const [transferPercent, setTransferPercent] = useState(10);
   const [paymentMethod, setPaymentMethod] = useState("mercadopago");
