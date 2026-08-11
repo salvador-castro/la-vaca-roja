@@ -150,7 +150,7 @@ export default function Home() {
       </section>
 
       {/* ======= ENVÍO GRATIS BANNER ======= */}
-      <section className="shipping-banner" aria-label="Envío gratis desde 60.000 pesos">
+      <section className="shipping-banner" aria-label="Envío gratis desde 90.000 pesos">
         <div className="shipping-banner-inner">
           <div className="shipping-banner-icon">
             <Truck size={88} strokeWidth={2} />
@@ -162,7 +162,7 @@ export default function Home() {
             </h2>
             <p className="shipping-banner-sub">
               En todas tus compras desde
-              <strong>$60.000</strong>
+              <strong>$90.000</strong>
             </p>
             <div className="shipping-banner-fine">
               Aplica únicamente en Capital Federal
@@ -170,7 +170,7 @@ export default function Home() {
           </div>
           <div className="shipping-banner-amount" aria-hidden="true">
             <span className="shipping-banner-amount-label">desde</span>
-            <span className="shipping-banner-amount-value">$60.000</span>
+            <span className="shipping-banner-amount-value">$90.000</span>
           </div>
         </div>
       </section>
