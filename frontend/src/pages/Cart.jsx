@@ -564,6 +564,9 @@ export default function Cart() {
                     <div style={{ marginTop: 4 }}>
                       Enviá el comprobante por WhatsApp al <strong>+54 9 11 6687-4595</strong>
                     </div>
+                    <div style={{ marginTop: 4 }}>
+                      El pedido se empieza a preparar una vez verificada la acreditación del pago.
+                    </div>
                   </div>
                 </div>
               )}
