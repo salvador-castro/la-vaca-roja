@@ -557,7 +557,14 @@ export default function Cart() {
                     color: "#16a34a",
                   }}
                 >
-                  🎉 {transferPercent}% de descuento aplicado. Te vamos a pasar el alias y los datos para transferir en el siguiente paso.
+                  🎉 {transferPercent}% de descuento aplicado.
+                  <div style={{ marginTop: 6, color: "var(--text)" }}>
+                    <div><strong>Alias:</strong> lavacaroja801</div>
+                    <div><strong>Titular:</strong> Micaela Cecilia Castelarini</div>
+                    <div style={{ marginTop: 4 }}>
+                      Enviá el comprobante por WhatsApp al <strong>+54 9 11 6687-4595</strong>
+                    </div>
+                  </div>
                 </div>
               )}
             </div>
