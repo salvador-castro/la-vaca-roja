@@ -22,8 +22,10 @@ const statusMap = {
   cancelled: { label: "Cancelado",        icon: XCircle,     color: "#f44336" },
 };
 
-// El cliente puede pedir cancelación/devolución en estos estados
-const CANCELLABLE_STATUSES = ["pending", "confirmed", "preparing"];
+// El backend solo deja cancelar pedidos pendientes; los pagos ya confirmados se gestionan por WhatsApp
+const CANCELLABLE_STATUSES = ["pending"];
+const REFUNDABLE_STATUSES = ["confirmed", "preparing"];
+const WHATSAPP_NUMBER = "5491166874595";
 
 // Bounding box de CABA (west,north,east,south) para acotar el autocomplete de Nominatim a la zona de envío
 const CABA_VIEWBOX = "-58.5315,-34.5265,-58.3350,-34.7052";
@@ -159,11 +161,8 @@ export default function ClientDashboard() {
     }
   };
 
-  const handleCancel = async (orderId, isPaid) => {
-    const msg = isPaid
-      ? "¿Solicitar devolución de este pedido? El equipo se pondrá en contacto para gestionar el reembolso."
-      : "¿Cancelar este pedido?";
-    if (!confirm(msg)) return;
+  const handleCancel = async (orderId) => {
+    if (!confirm("¿Cancelar este pedido?")) return;
 
     setActionLoading(orderId + "_cancel");
     try {
@@ -254,8 +253,9 @@ export default function ClientDashboard() {
             <div className="client-orders-list">
               {orders.map((order) => {
                 const { label, icon: Icon, color } = statusMap[order.status] || { label: order.status, icon: Clock, color: "#888" };
-                const isPaid = ["confirmed", "preparing"].includes(order.status);
                 const canCancel = CANCELLABLE_STATUSES.includes(order.status);
+                const canRequestRefund = REFUNDABLE_STATUSES.includes(order.status);
+                const canRetryPayment = order.status === "pending" && order.payment_method !== "transferencia";
 
                 return (
                   <div key={order.id} className="client-order-card">
@@ -305,9 +305,9 @@ export default function ClientDashboard() {
                       <strong>{formatPrice(order.total)}</strong>
                     </div>
 
-                    {canCancel && (
+                    {(canCancel || canRequestRefund) && (
                       <div className="client-order-actions">
-                        {order.status === "pending" && (
+                        {canRetryPayment && (
                           <button
                             className="btn btn-primary btn-sm"
                             disabled={actionLoading !== null}
@@ -317,17 +317,27 @@ export default function ClientDashboard() {
                             {actionLoading === order.id + "_retry" ? "Redirigiendo…" : "Reintentar pago"}
                           </button>
                         )}
-                        <button
-                          className="btn btn-outline btn-sm"
-                          disabled={actionLoading !== null}
-                          onClick={() => handleCancel(order.id, isPaid)}
-                        >
-                          {actionLoading === order.id + "_cancel"
-                            ? "Procesando…"
-                            : isPaid
-                            ? "Solicitar devolución"
-                            : "Cancelar pedido"}
-                        </button>
+                        {canCancel && (
+                          <button
+                            className="btn btn-outline btn-sm"
+                            disabled={actionLoading !== null}
+                            onClick={() => handleCancel(order.id)}
+                          >
+                            {actionLoading === order.id + "_cancel" ? "Procesando…" : "Cancelar pedido"}
+                          </button>
+                        )}
+                        {canRequestRefund && (
+                          <a
+                            className="btn btn-outline btn-sm"
+                            href={`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(
+                              `Hola! Quiero cancelar el pedido #${order.id} y solicitar la devolución del pago.`
+                            )}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
+                            Solicitar devolución
+                          </a>
+                        )}
                       </div>
                     )}
                   </div>
