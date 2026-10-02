@@ -13,6 +13,9 @@ const formatPrice = (p) =>
 
 const isKg = (unit) => unit === "kg";
 
+// IVA 10.5% (carne) — Ley 27.743 de transparencia fiscal
+const withoutNationalTaxes = (p) => p / 1.105;
+
 export default function ProductCard({ product }) {
   const { addItem } = useCart();
   const [added, setAdded] = useState(false);
@@ -94,6 +97,9 @@ export default function ProductCard({ product }) {
               {byKg
                 ? `${qty} kg · ${formatPrice(displayPrice)}/kg${promoActive ? ` (antes ${formatPrice(product.price)})` : ""}`
                 : `por ${product.unit}`}
+            </span>
+            <span className="product-card-price-unit" style={{ display: "block" }}>
+              Precio sin impuestos nacionales: {formatPrice(withoutNationalTaxes(displayPrice))} por {product.unit}
             </span>
           </div>
           <button

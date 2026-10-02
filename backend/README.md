@@ -1,200 +1,95 @@
-# TailAdmin Next.js - Free Next.js Tailwind Admin Dashboard Template
+# La Vaca Roja — Backend (API)
 
-TailAdmin is a free and open-source admin dashboard template built on **Next.js and Tailwind CSS** providing developers with everything they need to create a feature-rich and data-driven: back-end, dashboard, or admin panel solution for any sort of web project.
+API REST para **La Vaca Roja**, construida con Next.js. Centraliza el acceso a Supabase con la service role key, la integración con Mercado Pago, y la lógica de cupones, promociones y cálculo de zonas de envío. Es consumida por el panel de administración que vive en `../frontend` (`/dashboard`, rol Admin).
 
-![TailAdmin - Next.js Dashboard Preview](./banner.png)
+> Este directorio se bootstrapeó sobre el template **[TailAdmin Next.js](https://tailadmin.com)** (licencia MIT, ver [`LICENSE`](./LICENSE)). Las páginas de dashboard/gráficos/calendario/UI-kit que trae el template (`src/app/(admin)/(others-pages)`, `src/app/(admin)/(ui-elements)`) siguen mayormente con datos de demo y no están conectadas a Supabase — la gestión real del negocio ocurre desde el panel admin del frontend, que usa este proyecto solo como API.
 
-With TailAdmin Next.js, you get access to all the necessary dashboard UI components, elements, and pages required to build a high-quality and complete dashboard or admin panel. Whether you're building a dashboard or admin panel for a complex web application or a simple website.
+---
 
-TailAdmin utilizes the powerful features of **Next.js 16** and common features of Next.js such as server-side rendering (SSR), static site generation (SSG), and seamless API route integration. Combined with the advancements of **React 19** and the robustness of **TypeScript**, TailAdmin is the perfect solution to help get your project up and running quickly.
+## Stack tecnológico
 
-## Overview
+| Tecnología | Versión | Uso |
+|---|---|---|
+| [Next.js](https://nextjs.org/) | 16.x | Framework (App Router, API routes) |
+| [React](https://react.dev/) | 19.x | UI de las páginas heredadas del template |
+| [TypeScript](https://www.typescriptlang.org/) | 5.x | Tipado |
+| [Supabase JS](https://supabase.com/) | 2.x | Acceso a datos con la service role key |
+| [@supabase/ssr](https://supabase.com/docs/guides/auth/server-side) | 0.10.x | Autenticación server-side |
+| [Mercado Pago SDK](https://www.mercadopago.com.ar/developers/) | 2.x | Preferencias de pago, webhook y reintentos |
+| [Tailwind CSS](https://tailwindcss.com/) | 4.x | Estilos del template TailAdmin |
+| [ApexCharts](https://apexcharts.com/) / [FullCalendar](https://fullcalendar.io/) | 4.x / 6.x | Componentes del template (dashboard demo, calendario) |
+| [react-dnd](https://react-dnd.github.io/react-dnd/) | 16.x | Drag & Drop (template) |
+| [@react-jvectormap](https://www.npmjs.com/package/@react-jvectormap/core) | 1.x | Mapa de distribución (template) |
 
-TailAdmin provides essential UI components and layouts for building feature-rich, data-driven admin dashboards and control panels. It's built on:
+## API — Endpoints
 
-- Next.js 16.x
-- React 19
-- TypeScript
-- Tailwind CSS V4
+Todas las rutas viven bajo `src/app/api/` y responden con headers CORS dinámicos según `FRONTEND_URL` (ver `src/utils/supabase/api.ts`).
 
-### Quick Links
+| Endpoint | Método | Descripción |
+|---|---|---|
+| `/api/products` | GET, POST | Listado y alta de productos |
+| `/api/products/[id]` | GET, PUT, DELETE | Detalle, edición y baja de un producto |
+| `/api/orders` | GET, POST | Listado y creación de pedidos |
+| `/api/orders/[id]` | GET, PUT | Detalle y actualización de estado de un pedido |
+| `/api/coupons/validate` | POST | Valida un cupón (`code`, `subtotal`) sin incrementar su uso |
+| `/api/promotions` | GET | Combos/promociones activas (público) |
+| `/api/settings` | GET, POST | Configuración general del negocio |
+| `/api/shipping/estimate` | GET | Resuelve la zona de envío por geocoding de la dirección del perfil autenticado |
+| `/api/users` | GET, POST | Gestión de usuarios y roles |
+| `/api/payment/create-preference` | POST | Crea la preferencia de pago en Mercado Pago |
+| `/api/payment/webhook` | POST | Recibe notificaciones de pago de Mercado Pago |
+| `/api/payment/retry` | POST | Reintenta el pago de una orden existente |
 
-- [✨ Visit Website](https://tailadmin.com)
-- [📄 Documentation](https://tailadmin.com/docs)
-- [⬇️ Download](https://tailadmin.com/download)
-- [🖌️ Figma Design File (Community Edition)](https://www.figma.com/community/file/1463141366275764364)
-- [⚡ Get PRO Version](https://tailadmin.com/pricing)
+La autenticación de cada request se valida con `getAuthUser` / `requireAdmin` (`src/utils/supabase/api.ts`) a partir del JWT de Supabase enviado por el frontend.
 
-### Demos
+## Estructura del proyecto
 
-- [Free Version](https://nextjs-free-demo.tailadmin.com)
-- [Pro Version](https://nextjs-demo.tailadmin.com)
-
-### Other Versions
-
-- [Next.js Version](https://github.com/TailAdmin/free-nextjs-admin-dashboard)
-- [React.js Version](https://github.com/TailAdmin/free-react-tailwind-admin-dashboard)
-- [Vue.js Version](https://github.com/TailAdmin/vue-tailwind-admin-dashboard)
-- [Angular Version](https://github.com/TailAdmin/free-angular-tailwind-dashboard)
-- [Laravel Version](https://github.com/TailAdmin/tailadmin-laravel)
-
-## Installation
-
-### Prerequisites
-
-To get started with TailAdmin, ensure you have the following prerequisites installed and set up:
-
-- Node.js 18.x or later (recommended to use Node.js 20.x or later)
-
-### Cloning the Repository
-
-Clone the repository using the following command:
-
-```bash
-git clone https://github.com/TailAdmin/free-nextjs-admin-dashboard.git
+```
+backend/
+├── src/
+│   ├── app/
+│   │   ├── api/                    # Endpoints REST (ver tabla arriba)
+│   │   ├── (admin)/                # Shell del template TailAdmin (mayormente demo, no conectado)
+│   │   └── (full-width-pages)/     # Login/registro/errores del template
+│   ├── components/                 # Componentes UI del template TailAdmin
+│   ├── context/                    # Contextos del template (theme, sidebar)
+│   ├── hooks/                      # Hooks del template
+│   ├── layout/                     # Layout del dashboard TailAdmin
+│   └── utils/
+│       ├── supabase/               # Cliente admin, auth helpers, CORS
+│       └── shipping.ts             # Resolución de zona de envío por geocoding
+└── package.json
 ```
 
-> Windows Users: place the repository near the root of your drive if you face issues while cloning.
+## Variables de entorno
 
-1. Install dependencies:
+Crear un archivo `.env.local` en la raíz de `/backend`:
 
-   ```bash
-   npm install
-   # or
-   yarn install
-   ```
+```env
+NEXT_PUBLIC_SUPABASE_URL=
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=
+SUPABASE_SERVICE_ROLE_KEY=    # Solo servidor. Nunca exponer al cliente ni commitear.
+MP_ACCESS_TOKEN=              # Access token de Mercado Pago (test o producción)
+FRONTEND_URL=                 # Origen permitido por CORS (ej. https://lavacaroja.com.ar)
+BACKEND_PUBLIC_URL=           # URL pública de este backend, usada como callback del webhook de MP
+```
 
-   > Use `--legacy-peer-deps` flag if you face peer-dependency error during installation.
+## Instalación y desarrollo
 
-2. Start the development server:
+```bash
+npm install
+npm run dev    # http://localhost:3000
+```
 
-   ```bash
-   npm run dev
-   # or
-   yarn dev
-   ```
+### Comandos disponibles
 
-## Components
+```bash
+npm run dev      # Dev server
+npm run build    # Build de producción
+npm run start    # Sirve el build de producción
+npm run lint     # Linting con ESLint
+```
 
-TailAdmin is a pre-designed starting point for building a web-based dashboard using Next.js and Tailwind CSS. The template includes:
+## Licencia
 
-- Sophisticated and accessible sidebar
-- Data visualization components
-- Profile management and custom 404 page
-- Tables and Charts(Line and Bar)
-- Authentication forms and input elements
-- Alerts, Dropdowns, Modals, Buttons and more
-- Can't forget Dark Mode 🕶️
-
-All components are built with React and styled using Tailwind CSS for easy customization.
-
-## Feature Comparison
-
-### Free Version
-
-- 1 Unique Dashboard
-- 30+ dashboard components
-- 50+ UI elements
-- Basic Figma design files
-- Community support
-
-### Pro Version
-
-- 7 Unique Dashboards: Analytics, Ecommerce, Marketing, CRM, SaaS, Stocks, Logistics (more coming soon)
-- 500+ dashboard components and UI elements
-- Complete Figma design file
-- Email support
-
-To learn more about pro version features and pricing, visit our [pricing page](https://tailadmin.com/pricing).
-
-## Changelog
-
-### Version 2.2.3 - [March 15, 2026]
-
-- update ESLint configuration and dependencies; upgrade Next.js to version 16.1.6
-
-### Version 2.2.2 - [December 30, 2025]
-
-- Fixed date picker positioning and functionality in Statistics Chart.
-
-### Version 2.1.0 - [November 15, 2025]
-
-- Updated to Next.js 16.x
-- Fixed all reported minor bugs
-
-### Version 2.0.2 - [March 25, 2025]
-
-- Upgraded to Next.js 16.x for [CVE-2025-29927](https://nextjs.org/blog/cve-2025-29927) concerns
-- Included overrides vectormap for packages to prevent peer dependency errors during installation.
-- Migrated from react-flatpickr to flatpickr package for React 19 support
-
-### Version 2.0.1 - [February 27, 2025]
-
-#### Update Overview
-
-- Upgraded to Tailwind CSS v4 for better performance and efficiency.
-- Updated class usage to match the latest syntax and features.
-- Replaced deprecated class and optimized styles.
-
-#### Next Steps
-
-- Run npm install or yarn install to update dependencies.
-- Check for any style changes or compatibility issues.
-- Refer to the Tailwind CSS v4 [Migration Guide](https://tailwindcss.com/docs/upgrade-guide) on this release. if needed.
-- This update keeps the project up to date with the latest Tailwind improvements. 🚀
-
-### v2.0.0 (February 2025)
-
-A major update focused on Next.js 16 implementation and comprehensive redesign.
-
-#### Major Improvements
-
-- Complete redesign using Next.js 16 App Router and React Server Components
-- Enhanced user interface with Next.js-optimized components
-- Improved responsiveness and accessibility
-- New features including collapsible sidebar, chat screens, and calendar
-- Redesigned authentication using Next.js App Router and server actions
-- Updated data visualization using ApexCharts for React
-
-#### Breaking Changes
-
-- Migrated from Next.js 14 to Next.js 16
-- Chart components now use ApexCharts for React
-- Authentication flow updated to use Server Actions and middleware
-
-[Read more](https://tailadmin.com/docs/update-logs/nextjs) on this release.
-
-### v1.3.4 (July 01, 2024)
-
-- Fixed JSvectormap rendering issues
-
-### v1.3.3 (June 20, 2024)
-
-- Fixed build error related to Loader component
-
-### v1.3.2 (June 19, 2024)
-
-- Added ClickOutside component for dropdown menus
-- Refactored sidebar components
-- Updated Jsvectormap package
-
-### v1.3.1 (Feb 12, 2024)
-
-- Fixed layout naming consistency
-- Updated styles
-
-### v1.3.0 (Feb 05, 2024)
-
-- Upgraded to Next.js 14
-- Added Flatpickr integration
-- Improved form elements
-- Enhanced multiselect functionality
-- Added default layout component
-
-## License
-
-TailAdmin Next.js Free Version is released under the MIT License.
-
-## Support
-
-If you find this project helpful, please consider giving it a star on GitHub. Your support helps us continue developing and maintaining this template.
+El código propio de la API (`src/app/api/`, `src/utils/`) es de La Vaca Roja. El scaffolding UI heredado de TailAdmin se distribuye bajo licencia MIT — ver [`LICENSE`](./LICENSE).

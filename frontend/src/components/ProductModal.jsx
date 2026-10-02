@@ -7,10 +7,14 @@ const formatPrice = (p) =>
   new Intl.NumberFormat("es-AR", {
     style: "currency",
     currency: "ARS",
-    maximumFractionDigits: 0,
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2,
   }).format(p);
 
 const isKg = (unit) => unit === "kg";
+
+// IVA 10.5% (carne) — Ley 27.743 de transparencia fiscal
+const withoutNationalTaxes = (p) => p / 1.105;
 
 export default function ProductModal({ product, open, onClose }) {
   const { addItem } = useCart();
@@ -171,6 +175,9 @@ export default function ProductModal({ product, open, onClose }) {
                   {byKg
                     ? `${qty} kg · ${formatPrice(displayPrice)}/kg${promoActive ? ` (antes ${formatPrice(product.price)})` : ""}`
                     : `por ${product.unit}`}
+                </span>
+                <span className="product-card-price-unit" style={{ display: "block" }}>
+                  Precio sin impuestos nacionales: {formatPrice(withoutNationalTaxes(displayPrice))} por {product.unit}
                 </span>
               </div>
 
