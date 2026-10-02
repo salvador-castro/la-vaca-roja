@@ -8,6 +8,7 @@ import {
   getAuthUser,
 } from "@/utils/supabase/api";
 import { resolveZoneFromAddress, type Zone } from "@/utils/shipping";
+import { priceCartItems, resolveCoupon, mpOrderItem, round2, type CartItemInput } from "@/utils/pricing";
 
 const mp = new MercadoPagoConfig({
   accessToken: process.env.MP_ACCESS_TOKEN!,
@@ -16,15 +17,6 @@ const mp = new MercadoPagoConfig({
 export async function OPTIONS() {
   return handleOptions();
 }
-
-type CartItem = {
-  product_id: number;
-  product_name: string;
-  variant_name?: string;
-  quantity: number;
-  unit_price: number;
-  line_total: number;
-};
 
 type PaymentMethod = "mercadopago" | "transferencia";
 type DeliveryMethod = "pickup" | "delivery";
@@ -35,7 +27,7 @@ export async function POST(req: NextRequest) {
 
   const body = await req.json();
   const { items, coupon_id, notes, delivery_method, payment_method } = body as {
-    items: CartItem[];
+    items: CartItemInput[];
     coupon_id?: number;
     notes?: string;
     delivery_method: DeliveryMethod;
@@ -77,35 +69,24 @@ export async function POST(req: NextRequest) {
     zone_5_10: Number(settings.shipping_zone_5_10 ?? 6000),
   };
 
-  const subtotal = items.reduce((sum, item) => sum + item.line_total, 0);
+  // Precios, nombres y cupón salen de la base: no se confía en lo que manda el navegador
+  const priced = await priceCartItems(supabase, items);
+  if (!priced.ok) return corsError(priced.error, 400);
+  const pricedItems = priced.value;
 
-  let couponDiscount = 0;
-  let coupon = null;
+  const subtotal = round2(pricedItems.reduce((sum, item) => sum + item.line_total, 0));
 
-  if (coupon_id) {
-    const { data: c } = await supabase
-      .from("coupons")
-      .select("*")
-      .eq("id", coupon_id)
-      .eq("active", true)
-      .single();
-
-    if (c) {
-      coupon = c;
-      couponDiscount =
-        c.discount_type === "percentage"
-          ? (subtotal * c.discount_value) / 100
-          : Math.min(c.discount_value, subtotal);
-    }
-  }
+  const couponResult = await resolveCoupon(supabase, coupon_id, subtotal);
+  if (!couponResult.ok) return corsError(couponResult.error, 400);
+  const { coupon, discount: couponDiscount } = couponResult.value;
 
   const subtotalConCupon = subtotal - couponDiscount;
   const transferDiscount =
-    payment_method === "transferencia" ? subtotalConCupon * (transferPercent / 100) : 0;
+    payment_method === "transferencia" ? round2(subtotalConCupon * (transferPercent / 100)) : 0;
   const montoConDescuento = subtotalConCupon - transferDiscount;
   const shippingCost =
     zone === "pickup" ? 0 : montoConDescuento >= freeShippingMin ? 0 : zoneCosts[zone];
-  const total = montoConDescuento + shippingCost;
+  const total = round2(montoConDescuento + shippingCost);
 
   // Crear orden en Supabase
   const { data: order, error: orderError } = await supabase
@@ -131,7 +112,7 @@ export async function POST(req: NextRequest) {
 
   const { error: itemsError } = await supabase
     .from("order_items")
-    .insert(items.map((item) => ({ ...item, order_id: order.id })));
+    .insert(pricedItems.map((item) => ({ ...item, order_id: order.id })));
 
   if (itemsError) {
     await supabase.from("orders").delete().eq("id", order.id);
@@ -152,29 +133,13 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  // Armar preferencia de MP
-  const mpItems = [
-    ...items.map((item) => ({
-      id: String(item.product_id),
-      title: item.variant_name
-        ? `${item.product_name} (${item.variant_name})`
-        : item.product_name,
-      quantity: item.quantity,
-      unit_price: item.unit_price,
-      currency_id: "ARS",
-    })),
-    ...(shippingCost > 0
-      ? [{ id: "shipping", title: "Envío", quantity: 1, unit_price: shippingCost, currency_id: "ARS" }]
-      : []),
-  ];
-
   const frontendUrl = process.env.FRONTEND_URL ?? "http://localhost:5173";
   const backendUrl = process.env.BACKEND_PUBLIC_URL ?? "http://localhost:3000";
 
   const preference = new Preference(mp);
   const result = await preference.create({
     body: {
-      items: mpItems,
+      items: mpOrderItem(order.id, total),
       back_urls: {
         success: `${frontendUrl}/pago/exitoso`,
         failure: `${frontendUrl}/pago/fallido`,

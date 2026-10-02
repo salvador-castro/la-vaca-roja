@@ -3,6 +3,7 @@ import {
   corsResponse, corsError, handleOptions,
   createApiClient, getAuthUser,
 } from "@/utils/supabase/api";
+import { priceCartItems, resolveCoupon, round2 } from "@/utils/pricing";
 
 export async function OPTIONS() { return handleOptions(); }
 
@@ -54,7 +55,7 @@ export async function GET(req: NextRequest) {
 /**
  * POST /api/orders — crear pedido
  * Body: {
- *   items: [{ product_id, product_name, variant_name?, quantity, unit_price, line_total }]
+ *   items: [{ product_id, variant_name?, quantity }]  — precios y nombres se toman de la base
  *   coupon_id?: number
  *   notes?: string
  * }
@@ -70,33 +71,17 @@ export async function POST(req: NextRequest) {
 
   const supabase = createApiClient(req);
 
-  // Calcular totales
-  const subtotal: number = items.reduce(
-    (sum: number, item: { line_total: number }) => sum + item.line_total,
-    0
-  );
+  // Calcular totales con precios de la base
+  const priced = await priceCartItems(supabase, items);
+  if (!priced.ok) return corsError(priced.error, 400);
 
-  let couponDiscount = 0;
-  let coupon = null;
+  const subtotal = round2(priced.value.reduce((sum, item) => sum + item.line_total, 0));
 
-  if (coupon_id) {
-    const { data: c } = await supabase
-      .from("coupons")
-      .select("*")
-      .eq("id", coupon_id)
-      .eq("active", true)
-      .single();
+  const couponResult = await resolveCoupon(supabase, coupon_id, subtotal);
+  if (!couponResult.ok) return corsError(couponResult.error, 400);
+  const { coupon, discount: couponDiscount } = couponResult.value;
 
-    if (c) {
-      coupon = c;
-      couponDiscount =
-        c.discount_type === "percentage"
-          ? (subtotal * c.discount_value) / 100
-          : Math.min(c.discount_value, subtotal);
-    }
-  }
-
-  const total = subtotal - couponDiscount;
+  const total = round2(subtotal - couponDiscount);
 
   // Crear la orden
   const { data: order, error: orderError } = await supabase
@@ -116,7 +101,7 @@ export async function POST(req: NextRequest) {
   if (orderError) return corsError(orderError.message, 500);
 
   // Insertar ítems
-  const orderItems = items.map((item: Record<string, unknown>) => ({
+  const orderItems = priced.value.map((item) => ({
     ...item,
     order_id: order.id,
   }));
