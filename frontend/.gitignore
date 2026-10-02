@@ -26,3 +26,4 @@ dist-ssr
 # SQL scripts y directorio lib
 src/lib/
 
+test.js
