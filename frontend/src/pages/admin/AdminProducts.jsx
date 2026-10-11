@@ -18,6 +18,7 @@ const empty = {
   unit: "kg",
   active: true,
   featured: false,
+  is_combo: false,
   variants: [],
 };
 
@@ -99,6 +100,7 @@ export default function AdminProducts() {
       slug: p.badge || "",
       description: p.description || "",
       featured: p.featured ?? false,
+      is_combo: p.is_combo ?? false,
       variants,
     });
     setModal({ mode: "edit", id: p.id });
@@ -148,6 +150,7 @@ export default function AdminProducts() {
       unit: form.unit,
       active: form.active,
       featured: form.featured,
+      is_combo: form.is_combo,
       has_variants: variants.length > 0,
       variants,
     };
@@ -504,6 +507,10 @@ export default function AdminProducts() {
                 <label className="admin-check-label">
                   <input type="checkbox" checked={form.featured} onChange={set("featured")} />
                   Destacado en home
+                </label>
+                <label className="admin-check-label">
+                  <input type="checkbox" checked={form.is_combo} onChange={set("is_combo")} />
+                  Mostrar en Ofertas de la semana
                 </label>
               </div>
 

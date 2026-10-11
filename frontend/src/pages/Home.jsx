@@ -76,7 +76,10 @@ export default function Home() {
   useReveal();
   const { products, loading } = useProducts();
   const { promos, loading: promosLoading } = usePromos();
-  const featured = products.filter((p) => p.featured).slice(0, 8);
+  const featured = products
+    .filter((p) => p.featured)
+    .sort((a, b) => new Date(b.updated_at ?? b.created_at) - new Date(a.updated_at ?? a.created_at))
+    .slice(0, 12);
 
   useEffect(() => {
     if (promosLoading) return;
@@ -219,7 +222,7 @@ export default function Home() {
                         <span className="featured-promo-price-unit"> / {p.unit}</span>
                       </span>
                     </div>
-                    <Link to="/shop?category=Promociones" className="btn btn-primary btn-sm">
+                    <Link to={`/shop?cat=${encodeURIComponent(p.category)}`} className="btn btn-primary btn-sm">
                       Ver en tienda <ArrowRight size={14} />
                     </Link>
                   </div>

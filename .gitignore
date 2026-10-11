@@ -27,3 +27,4 @@ logs
 .idea
 .vercel
 .env*.local
+.env*
